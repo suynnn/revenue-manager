@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/revenue_system
+    username: root
+    password: revenue1234
+    driver-class-name: org.postgresql.Driver
