@@ -13,3 +13,4 @@ spring:
 
   profiles:
     active: local
+    include: oauth, jwt
