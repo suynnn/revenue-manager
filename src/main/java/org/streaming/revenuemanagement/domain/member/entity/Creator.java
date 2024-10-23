@@ -1,6 +1,7 @@
 package org.streaming.revenuemanagement.domain.member.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
@@ -18,4 +19,9 @@ public class Creator extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
+
+    @Builder
+    public Creator(Member member) {
+        this.member = member;
+    }
 }
