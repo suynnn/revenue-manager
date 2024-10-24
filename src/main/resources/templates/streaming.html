@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Watching</title>
+</head>
+<body>
+<h1>Video Watching Example</h1>
+
+<video id="videoPlayer" width="640" height="360" controls>
+    <source th:src="@{${videoRespDto.videoAddr}}" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+<p id="resumeTimeText" style="display: none;">이전 시청 시간으로 이동 중...</p>
+
+<br>
+<button id="startWatchingButton">시청 시작</button>
+
+<script th:inline="javascript">
+    /* Spring에서 전달된 videoRespDto와 videoLogRespDto 사용 */
+    const videoRespDto = /*[[${videoRespDto}]]*/ {};
+    const videoId = videoRespDto.id;  // videoRespDto에서 videoId 가져오기
+    const videoTitle = videoRespDto.videoTitle;  // video 제목
+    const runningTime = videoRespDto.runningTime;  // 영상 재생 시간
+    const creatorId = videoRespDto.creatorId;
+
+    const videoLogRespDto = /*[[${videoLogRespDto}]]*/ null;
+    const memberId = /*[[${memberId}]]*/ null;
+
+    function getRandomLong() {
+        // Long 타입 크기 범위 내에서 큰 정수 값을 생성
+        return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+    }
+
+    const uuid = getRandomLong();
+    console.log(uuid)
+
+    function sendWatchStatus(videoLogReqDto) {
+        console.log("sendWatchStatus 함수 실행됨");
+        fetch('/api/streaming/watch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(videoLogReqDto)
+        })
+            .then(response => response.text())
+            .then(result => console.log("응답 수신: " + result))
+            .catch(error => console.error('Error:', error));
+
+        console.log("watch status 전송 완료");
+    }
+
+    const player = document.getElementById('videoPlayer');
+    const startButton = document.getElementById('startWatchingButton');
+    const resumeText = document.getElementById('resumeTimeText');
+    let intervalId;
+    let currentTime = 0; // 현재 시청 시간 초기값
+
+    // 페이지가 로드될 때, videoLogRespDto에서 endWatchTime이 있으면 해당 시점으로 이동
+    window.onload = function () {
+        if (videoLogRespDto && videoLogRespDto.endWatchTime) {
+            player.currentTime = videoLogRespDto.endWatchTime;
+            resumeText.style.display = 'block'; // 이전 시청 시간이 있음을 표시
+        }
+    };
+
+    // 시청 시작 버튼 클릭 시 폴링 시작
+    startButton.addEventListener('click', () => {
+        if (intervalId) {
+            clearInterval(intervalId); // 이전에 설정된 폴링이 있다면 종료
+            console.log("이전 폴링 중지됨");
+        }
+
+        intervalId = setInterval(() => {
+            currentTime += 15; // 버튼을 누르면 currentTime을 15초씩 증가
+
+            let isWatchCompleted = false;
+            if (currentTime >= runningTime) {
+                currentTime = runningTime;
+                isWatchCompleted = true;
+                clearInterval(intervalId); // 시청 완료 시 폴링 중지
+                console.log("시청이 완료되어 폴링이 중지되었습니다.");
+            }
+
+            const videoLogReqDto = {
+                videoId: videoId,
+                memberId: memberId,
+                creatorId: creatorId,
+                startWatchTime: videoLogRespDto ? videoLogRespDto.endWatchTime : 0,
+                endWatchTime: videoLogRespDto ? videoLogRespDto.endWatchTime + currentTime : currentTime,
+                playTime: currentTime,
+                isWatchCompleted: isWatchCompleted,
+                uuid: uuid
+            };
+            sendWatchStatus(videoLogReqDto);
+        }, 10000);
+
+        console.log("폴링이 시작되었습니다.");
+    });
+</script>
+</body>
+</html>

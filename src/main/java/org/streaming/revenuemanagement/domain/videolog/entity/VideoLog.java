@@ -3,13 +3,16 @@ package org.streaming.revenuemanagement.domain.videolog.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
 import org.streaming.revenuemanagement.domain.member.entity.Member;
 import org.streaming.revenuemanagement.domain.video.entity.Video;
+import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;
 
 @Entity
 @Table
 @Getter
+@ToString
 @NoArgsConstructor
 public class VideoLog extends BaseEntity {
 
@@ -27,12 +30,37 @@ public class VideoLog extends BaseEntity {
 
     private String guestIp;
 
-    @JoinColumn(nullable = false)
+    @Column(nullable = false)
     private Long startWatchTime = 0L;
 
-    @JoinColumn(nullable = false)
+    @Column(nullable = false)
     private Long endWatchTime = 0L;
 
-    @JoinColumn(nullable = false)
+    @Column(nullable = false)
     private Long playTime = 0L;
+
+    @Column(nullable = false)
+    private Boolean isWatchCompleted = false;
+
+
+    public VideoLog(VideoLogReqDto videoLogReqDto, Video video, Member member) {
+
+        this(videoLogReqDto);
+        this.video = video;
+        this.member = member;
+    }
+
+    public VideoLog(VideoLogReqDto videoLogReqDto, Video video) {
+
+        this(videoLogReqDto);
+        this.video = video;
+        this.guestIp = videoLogReqDto.getGuestIp();
+    }
+
+    private VideoLog(VideoLogReqDto videoLogReqDto) {
+        this.startWatchTime = videoLogReqDto.getStartWatchTime();
+        this.endWatchTime = videoLogReqDto.getEndWatchTime();
+        this.playTime = videoLogReqDto.getPlayTime();
+        this.isWatchCompleted = videoLogReqDto.getIsWatchCompleted();
+    }
 }

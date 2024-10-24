@@ -27,7 +27,7 @@ public class Video extends BaseEntity {
     private String videoTitle;
 
     @Column(nullable = false)
-    private Integer runningTIme;
+    private Integer runningTime;
 
     @Column(nullable = false)
     private Boolean isPrivate;
