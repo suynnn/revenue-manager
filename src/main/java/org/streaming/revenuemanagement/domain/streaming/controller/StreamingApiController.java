@@ -28,4 +28,13 @@ public class StreamingApiController {
 
         return "OK";
     }
+
+    @PostMapping("/pause")
+    public String pauseVideo(@RequestParam("videoId")Long videoId,
+                             HttpServletRequest request) {
+
+        streamingService.handlePauseVideo(videoId, request);
+
+        return "pause ok";
+    }
 }

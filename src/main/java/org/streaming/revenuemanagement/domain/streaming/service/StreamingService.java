@@ -35,4 +35,12 @@ public class StreamingService {
         log.info("User ID: {}, Video ID: {}, Start Time: {}, End Time: {}, Play Time: {}",
                 userId, videoLogReqDto.getVideoId(), videoLogReqDto.getStartWatchTime(), videoLogReqDto.getEndWatchTime(), videoLogReqDto.getPlayTime());
     }
+
+    public void handlePauseVideo(Long videoId, HttpServletRequest request) {
+        String userId = userUtils.getUserId(request);
+
+        String redisKey = "log:video:" + videoId + ":user:" + userId;
+
+        videoLogService.videoLogTTLUpdate(redisKey);
+    }
 }
