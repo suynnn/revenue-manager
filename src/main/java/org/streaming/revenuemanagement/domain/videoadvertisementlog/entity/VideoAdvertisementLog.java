@@ -17,11 +17,11 @@ public class VideoAdvertisementLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "video_log_id")
     private VideoLog videoLog;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "advertisement_id")
     private Advertisement advertisement;
 }
