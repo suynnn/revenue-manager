@@ -11,6 +11,7 @@ import org.streaming.revenuemanagement.domain.member.entity.SocialType;
 @ToString
 public class MemberDto {
 
+    private Long id;
     private String email;
     private String name;
     private String username;

@@ -38,7 +38,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String token = jwtUtil.createJwt(username, role, 60*60*60L);
+        Long memberId = customUserDetails.getId();
+
+        String token = jwtUtil.createJwt(username, role, memberId, 60*60*60L * 1000);
 
         // 기존 JWT가 만료된 경우 쿠키 삭제
         deleteCookie(response, "Authorization");

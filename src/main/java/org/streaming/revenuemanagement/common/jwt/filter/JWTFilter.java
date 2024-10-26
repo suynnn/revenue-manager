@@ -32,12 +32,13 @@ public class JWTFilter extends OncePerRequestFilter {
         String authorization = null;
 
         Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
 
-            System.out.println(cookie.getName());
-            if (cookie.getName().equals("Authorization")) {
-
-                authorization = cookie.getValue();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                System.out.println(cookie.getName());
+                if ("Authorization".equals(cookie.getName())) {
+                    authorization = cookie.getValue();
+                }
             }
         }
 
@@ -67,11 +68,13 @@ public class JWTFilter extends OncePerRequestFilter {
         //토큰에서 username과 role 획득
         String username = jwtUtil.getUsername(token);
         String role = jwtUtil.getRole(token);
+        Long memberId = jwtUtil.getMemberId(token);
 
         //userDTO를 생성하여 값 set
         MemberDto memberDto = new MemberDto();
         memberDto.setUsername(username);
         memberDto.setRole(Role.fromKey(role));
+        memberDto.setId(memberId);
 
         //UserDetails에 회원 정보 객체 담기
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(memberDto);
