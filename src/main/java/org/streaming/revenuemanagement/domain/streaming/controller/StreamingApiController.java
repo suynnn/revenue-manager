@@ -37,4 +37,14 @@ public class StreamingApiController {
 
         return "pause ok";
     }
+
+    @PostMapping("/ad/{advertisementId}")
+    public String watchAdvertisement(@PathVariable("advertisementId") Long advertisementId,
+                                     @RequestParam("videoId") Long videoId,
+                          HttpServletRequest request) {
+
+        streamingService.watchAdvertisement(advertisementId, videoId, request);
+
+        return "ad ok";
+    }
 }
