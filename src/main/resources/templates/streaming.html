@@ -30,6 +30,10 @@
     const videoLogRespDto = /*[[${videoLogRespDto}]]*/ null;
     const memberId = /*[[${memberId}]]*/ null;
 
+    // 광고 리스트에서 id 필드들만 추출
+    const advertisementRespDtoList = /*[[${advertisementRespDtoList}]]*/ [];
+    const advertisementIds = advertisementRespDtoList.map(ad => ad.id);  // 광고 id 리스트
+
     function getRandomLong() {
         // Long 타입 크기 범위 내에서 큰 정수 값을 생성
         return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
@@ -64,11 +68,22 @@
             .catch(error => console.error('Error:', error));
     }
 
+    function watchAdvertisement(advertisementId, videoId) {
+        const adUrl = `/api/streaming/ad/${advertisementId}?videoId=${videoId}`;
+        fetch(adUrl, {
+            method: 'POST'
+        })
+            .then(response => response.text())
+            .then(result => console.log("광고 응답 수신: " + result))
+            .catch(error => console.error('Error:', error));
+    }
+
     const player = document.getElementById('videoPlayer');
     const startButton = document.getElementById('startWatchingButton');
     const pauseButton = document.getElementById('pauseWatchingButton');
     const resumeText = document.getElementById('resumeTimeText');
     let intervalId;
+    let advertisementIntervalId;
     let currentTime = 0; // 현재 시청 시간 초기값
     let isPaused = false; // 일시멈춤 상태 확인용 변수
 
@@ -102,6 +117,7 @@
                     currentTime = runningTime;
                     isWatchCompleted = true;
                     clearInterval(intervalId); // 시청 완료 시 폴링 중지
+                    clearInterval(advertisementIntervalId); // 광고 폴링도 중지
                     console.log("시청이 완료되어 폴링이 중지되었습니다.");
                 }
 
@@ -116,6 +132,18 @@
                     uuid: uuid
                 };
                 sendWatchStatus(videoLogReqDto);
+
+                // 광고 시청 요청
+                if ((videoLogReqDto.endWatchTime % 30) === 0) {
+                    if (advertisementIds.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * advertisementIds.length);
+                        const advertisementId = advertisementIds[randomIndex];
+                        watchAdvertisement(advertisementId, videoId);
+                    } else {
+                        console.log("광고 ID 리스트가 비어있습니다.");
+                    }
+                }
+
             } else {
                 // 일시멈춤 상태에서는 sendPauseStatus 호출
                 sendPauseStatus(videoId, memberId);

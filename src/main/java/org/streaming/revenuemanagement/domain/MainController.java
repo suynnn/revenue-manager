@@ -8,9 +8,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.streaming.revenuemanagement.common.oauth2.userinfo.CustomOAuth2User;
+import org.streaming.revenuemanagement.domain.advertisement.dto.AdvertisementRespDto;
+import org.streaming.revenuemanagement.domain.advertisement.service.AdvertisementService;
 import org.streaming.revenuemanagement.domain.video.service.VideoService;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogRespDto;
 import org.streaming.revenuemanagement.domain.videolog.service.VideoLogService;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -18,6 +22,7 @@ public class MainController {
 
     private final VideoLogService videoLogService;
     private final VideoService videoService;
+    private final AdvertisementService advertisementService;
 
     @GetMapping("/")
     public String index() {
@@ -29,6 +34,9 @@ public class MainController {
     public String videoPage(@PathVariable("videoId") Long videoId, Model model) {
         model.addAttribute("videoRespDto", videoService.findById(videoId));
         model.addAttribute("videoId", videoId);
+
+        List<AdvertisementRespDto> advertisementRespDtoList = advertisementService.findAll();
+        model.addAttribute("advertisementRespDtoList", advertisementRespDtoList);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

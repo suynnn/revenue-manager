@@ -36,7 +36,7 @@ public class VideoLogService {
     }
 
     public void videoLogSaveToRedis(String key, VideoLogReqDto value) {
-        redisTemplate.opsForValue().set(key, value);
+        redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(30));
         redisTemplate.expire(key, Duration.ofSeconds(30)); // TTL 설정
     }
 

@@ -1,6 +1,7 @@
 package org.streaming.revenuemanagement.domain.videoadvertisementlog.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.streaming.revenuemanagement.domain.advertisement.entity.Advertisement;
@@ -24,4 +25,11 @@ public class VideoAdvertisementLog extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "advertisement_id")
     private Advertisement advertisement;
+
+    @Builder
+    public VideoAdvertisementLog(VideoLog videoLog, Advertisement advertisement) {
+
+        this.videoLog = videoLog;
+        this.advertisement = advertisement;
+    }
 }

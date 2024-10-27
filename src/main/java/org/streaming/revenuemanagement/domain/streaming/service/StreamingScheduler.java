@@ -5,10 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.streaming.revenuemanagement.domain.advertisement.entity.Advertisement;
+import org.streaming.revenuemanagement.domain.advertisement.repository.AdvertisementRepository;
 import org.streaming.revenuemanagement.domain.member.entity.Member;
 import org.streaming.revenuemanagement.domain.member.repository.MemberRepository;
 import org.streaming.revenuemanagement.domain.video.entity.Video;
 import org.streaming.revenuemanagement.domain.video.repository.VideoRepository;
+import org.streaming.revenuemanagement.domain.videoadvertisementlog.entity.VideoAdvertisementLog;
+import org.streaming.revenuemanagement.domain.videoadvertisementlog.repository.VideoAdvertisementLogRepository;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
@@ -25,10 +29,12 @@ public class StreamingScheduler {
     private final VideoLogRepository videoLogRepository;
     private final VideoRepository videoRepository;
     private final MemberRepository memberRepository;
+    private final VideoAdvertisementLogRepository videoAdvertisementLogRepository;
+    private final AdvertisementRepository advertisementRepository;
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    @Scheduled(fixedRate = 10000) // 5초마다 실행
+    @Scheduled(fixedRate = 10000) // 10초마다 실행
     public void checkAndSaveLogs() {
         Set<String> keys = redisTemplate.keys("log:video:*");
 
@@ -46,22 +52,48 @@ public class StreamingScheduler {
 
                         Video video = videoRepository.findById(videoLogReqDto.getVideoId()).orElseThrow();
 
+                        VideoLog videoLog;
+                        String user;
+
                         if (key.contains("ip")) {
-                            videoLogReqDto.setGuestIp(key.split(" ")[1]);
-                            VideoLog videoLog = new VideoLog(videoLogReqDto, video);
+                            user = key.split(" ")[1];
+
+                            videoLogReqDto.setGuestIp(user);
+                            videoLog = new VideoLog(videoLogReqDto, video);
+                            user = "ip " + user;
 
                             videoLogRepository.save(videoLog);
                         }
                         else {
                             Member member = memberRepository.findById(videoLogReqDto.getMemberId()).orElseThrow();
 
-                            VideoLog videoLog = new VideoLog(videoLogReqDto, video, member);
+                            user = member.getUsername();
+                            videoLog = new VideoLog(videoLogReqDto, video, member);
 
                             videoLogRepository.save(videoLog);
                         }
                         redisTemplate.delete(key); // 저장 후 Redis에서 삭제
 
                         System.out.println("DB에 저장되었습니다: " + videoLogReqDto);
+
+                        Set<String> adKeys = redisTemplate.keys("ad:*:video:" + video.getId() + ":user:" + user);
+
+                        if (adKeys != null) {
+                            for (String adKey : adKeys) {
+                                Long advertisementId = Long.parseLong(adKey.split(":")[1]);
+                                Advertisement advertisement = advertisementRepository.findById(advertisementId).orElseThrow();
+
+                                int adViewCnt = (Integer) redisTemplate.opsForValue().get(adKey);
+
+                                for (int i = 0; i < adViewCnt; i++) {
+                                    VideoAdvertisementLog videoAdvertisementLog = new VideoAdvertisementLog(videoLog, advertisement);
+
+                                    videoAdvertisementLogRepository.save(videoAdvertisementLog);
+                                }
+
+                                redisTemplate.delete(adKey);
+                            }
+                        }
                     }
                 }
             }
