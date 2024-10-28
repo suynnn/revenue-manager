@@ -42,6 +42,9 @@ public class VideoLog extends BaseEntity {
     @Column(nullable = false)
     private Boolean isWatchCompleted = false;
 
+    @Column(nullable = false)
+    private Integer adCnt = 0;
+
 
     public VideoLog(VideoLogReqDto videoLogReqDto, Video video, Member member) {
 
@@ -62,5 +65,6 @@ public class VideoLog extends BaseEntity {
         this.endWatchTime = videoLogReqDto.getEndWatchTime();
         this.playTime = videoLogReqDto.getPlayTime();
         this.isWatchCompleted = videoLogReqDto.getIsWatchCompleted();
+        this.adCnt = videoLogReqDto.getAdCnt();
     }
 }

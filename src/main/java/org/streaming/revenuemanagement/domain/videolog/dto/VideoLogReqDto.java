@@ -18,4 +18,5 @@ public class VideoLogReqDto {
     private Long playTime;
     private Boolean isWatchCompleted;
     private Long uuid;
+    private Integer adCnt;
 }
