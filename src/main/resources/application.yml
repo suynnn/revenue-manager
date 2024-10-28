@@ -15,9 +15,9 @@ spring:
     active: local
     include: oauth, jwt
 
-  batch:
-    job:
-      enabled: false
+#  batch:
+#    job:
+#      enabled: false
 
     jdbc:
       initialize-schema: always
