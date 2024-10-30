@@ -28,7 +28,7 @@ public class BatchScheduler {
         this.adjustmentJob = adjustmentJob;
     }
 
-    @Scheduled(cron = "0 40 11 * * *")
+    @Scheduled(cron = "0 04 16 * * *")
     public void runStatisticsJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()
@@ -40,7 +40,7 @@ public class BatchScheduler {
         }
     }
 
-    @Scheduled(cron = "0 43 11 * * *")
+    @Scheduled(cron = "0 05 16 * * *")
     public void runAdjustmentJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()

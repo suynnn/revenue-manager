@@ -36,6 +36,9 @@ public class VideoDailyStatistics extends BaseEntity {
     @Column(nullable = false)
     private Long dailyAdjustment = 0L;
 
+    @Column(nullable = false)
+    private Long dailyAdAdjustment = 0L;
+
     @Builder
     public VideoDailyStatistics(VideoStatistics videoStatistics, Long videoId) {
         this.videoStatistics = videoStatistics;
@@ -50,5 +53,9 @@ public class VideoDailyStatistics extends BaseEntity {
 
     public void updateAdjustment(Long adjustment) {
         this.dailyAdjustment += adjustment;
+    }
+
+    public void updateAdAdjustment(Long adAdjustment) {
+        this.dailyAdAdjustment += adAdjustment;
     }
 }

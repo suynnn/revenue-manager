@@ -32,6 +32,9 @@ public class VideoStatistics extends BaseEntity {
     @Column(nullable = false)
     private Long totalAdjustment = 0L;
 
+    @Column(nullable = false)
+    private Long totalAdAdjustment = 0L;
+
 
     public void updateStatistics(Long totalViews, Long totalAdViews, Long totalPlayTime) {
         this.totalViews += totalViews;
@@ -41,6 +44,10 @@ public class VideoStatistics extends BaseEntity {
 
     public void updateAdjustment(Long totalAdjustment) {
         this.totalAdjustment += totalAdjustment;
+    }
+
+    public void updateAdAdjustment(Long totalAdAdjustment) {
+        this.totalAdAdjustment += totalAdAdjustment;
     }
 
 }

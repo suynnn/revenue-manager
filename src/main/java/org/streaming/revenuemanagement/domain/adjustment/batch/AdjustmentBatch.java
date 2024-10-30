@@ -90,12 +90,11 @@ public class AdjustmentBatch {
                 // 광고별 단가 계산
                 long adAdjustment = calculateAdAdjustment(totalViews, dailyAdViews);
 
-                // 총 조정 금액 계산 및 반영
-                long totalAdjustment = videoAdjustment + adAdjustment;
-                totalAdjustment = (long) Math.floor(totalAdjustment); // 1원 단위 이하 절사
+                videoDailyStatistics.updateAdjustment(videoAdjustment);
+                videoDailyStatistics.updateAdAdjustment(adAdjustment);
 
-                videoDailyStatistics.updateAdjustment(totalAdjustment);
-                videoStatistics.updateAdjustment(totalAdjustment);
+                videoStatistics.updateAdjustment(videoAdjustment);
+                videoStatistics.updateAdAdjustment(adAdjustment);
 
                 return videoDailyStatistics;
             }
