@@ -1,4 +1,4 @@
-package org.streaming.revenuemanagement.domain.member.controller;
+package org.streaming.revenuemanagement.common.controller.api;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
