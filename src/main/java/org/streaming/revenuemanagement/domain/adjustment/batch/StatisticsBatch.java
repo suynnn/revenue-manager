@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto;
@@ -28,6 +29,7 @@ import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoSt
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -223,7 +225,7 @@ public class StatisticsBatch {
     public Step adjustmentStep1() {
 
         return new StepBuilder("adjustmentStep1", jobRepository)
-                .<VideoDailyStatistics, VideoDailyStatistics> chunk(10, platformTransactionManager)
+                .<VideoDailyStatistics, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
                 .reader(adjustmentVideoDailyStatisticsReader())
                 .processor(adjustmentVideoDailyStatisticsProcessor())
                 .writer(adjustmentVideoDailyStatisticsWriter())
@@ -240,7 +242,7 @@ public class StatisticsBatch {
         return new RepositoryItemReaderBuilder<VideoDailyStatistics>()
                 .name("adjustmentVideoDailyStatisticsReader")
                 .arguments(List.of(startOfDay, endOfDay))
-                .pageSize(10)
+                .pageSize(chunkSize)
                 .methodName("findAllByCreatedAtBetween")
                 .repository(videoDailyStatisticsRepository)
                 .sorts(Map.of("id", Sort.Direction.ASC))
@@ -336,14 +338,25 @@ public class StatisticsBatch {
     @Bean
     public ItemWriter<VideoDailyStatistics> adjustmentVideoDailyStatisticsWriter() {
         return items -> {
-            for (VideoDailyStatistics dailyStatistics : items) {
-                // VideoDailyStatistics 저장
-                videoDailyStatisticsRepository.save(dailyStatistics);
+            List<VideoDailyStatistics> updatedVideoDailyStatistics = new ArrayList<>();
+            List<VideoStatistics> updatedVideoStatistics = new ArrayList<>();
 
-                // 연관된 VideoStatistics 저장
+            for (VideoDailyStatistics dailyStatistics : items) {
+
+                updatedVideoDailyStatistics.add(dailyStatistics);
+
                 VideoStatistics videoStatistics = dailyStatistics.getVideoStatistics();
-                videoStatisticsRepository.save(videoStatistics);
+                updatedVideoStatistics.add(videoStatistics);
             }
+
+            saveAllVideoData(updatedVideoDailyStatistics, updatedVideoStatistics);
         };
+    }
+
+    @Transactional
+    public void saveAllVideoData(List<VideoDailyStatistics> videoDailyStatisticsList, List<VideoStatistics> videoStatisticsList) {
+        // VideoDailyStatistics와 VideoStatistics를 모두 한 번에 저장
+        videoDailyStatisticsRepository.saveAll(videoDailyStatisticsList);
+        videoStatisticsRepository.saveAll(videoStatisticsList);
     }
 }
