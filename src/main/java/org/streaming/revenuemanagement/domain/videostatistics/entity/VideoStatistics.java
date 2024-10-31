@@ -37,16 +37,19 @@ public class VideoStatistics extends BaseEntity {
 
 
     public void updateStatistics(Long totalViews, Long totalAdViews, Long totalPlayTime) {
+
         this.totalViews += totalViews;
         this.totalAdViews += totalAdViews;
         this.totalPlayTime += totalPlayTime;
     }
 
     public void updateAdjustment(Long totalAdjustment) {
+
         this.totalAdjustment += totalAdjustment;
     }
 
     public void updateAdAdjustment(Long totalAdAdjustment) {
+
         this.totalAdAdjustment += totalAdAdjustment;
     }
 
