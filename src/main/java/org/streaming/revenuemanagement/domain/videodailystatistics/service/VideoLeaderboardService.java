@@ -6,6 +6,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.streaming.revenuemanagement.domain.videodailystatistics.dto.VideoStatisticDto;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
+import org.streaming.revenuemanagement.domain.videostatistics.dto.AdjustmentPeriodStatisticDto;
+import org.streaming.revenuemanagement.domain.videostatistics.dto.AdjustmentStatisticDto;
+import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoStatisticsRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,6 +21,7 @@ import java.util.List;
 public class VideoLeaderboardService {
 
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
+    private final VideoStatisticsRepository videoStatisticsRepository;
 
     public List<VideoStatisticDto> getTop5VideosByViews(String period) {
         LocalDateTime[] dateRange = calculateDateRange(period);
@@ -67,4 +71,17 @@ public class VideoLeaderboardService {
         }
         return new LocalDateTime[]{start, end};
     }
+
+    public AdjustmentPeriodStatisticDto getAdjustmentByVideoId(Long videoId) {
+        LocalDateTime[] dailyRange = calculateDateRange("day");
+        LocalDateTime[] weeklyRange = calculateDateRange("week");
+        LocalDateTime[] monthlyRange = calculateDateRange("month");
+
+        List<AdjustmentStatisticDto> dailyStatistics = videoStatisticsRepository.findAdjustmentStatisticsByVideoIdAndDateRange(videoId, dailyRange[0], dailyRange[1]);
+        List<AdjustmentStatisticDto> weeklyStatistics = videoStatisticsRepository.findAdjustmentStatisticsByVideoIdAndDateRange(videoId, weeklyRange[0], weeklyRange[1]);
+        List<AdjustmentStatisticDto> monthlyStatistics = videoStatisticsRepository.findAdjustmentStatisticsByVideoIdAndDateRange(videoId, monthlyRange[0], monthlyRange[1]);
+
+        return new AdjustmentPeriodStatisticDto(videoId, dailyStatistics, weeklyStatistics, monthlyStatistics);
+    }
+
 }
