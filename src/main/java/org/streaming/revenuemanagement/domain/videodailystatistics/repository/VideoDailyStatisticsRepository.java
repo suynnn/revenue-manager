@@ -18,9 +18,11 @@ public interface VideoDailyStatisticsRepository extends JpaRepository<VideoDaily
 
     Optional<VideoDailyStatistics> findByVideoId(Long videoId);
 
+    // 특정 기간 동안 생성된 VideoDailyStatistics 엔티티들을 페이징 형식으로 조회
     Page<VideoDailyStatistics> findAllByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     // 조회수가 높은 TOP 5 동영상 가져오기
+    // VideoStatisticDto 객체로 비디오 ID와 조회수 합계를 반환하며, 조회수를 기준으로 내림차순으로 정렬
     @Query("SELECT new org.streaming.revenuemanagement.domain.videodailystatistics.dto.VideoStatisticDto(v.videoId, SUM(v.dailyViews)) " +
             "FROM VideoDailyStatistics v " +
             "WHERE v.createdAt BETWEEN :start AND :end " +
@@ -32,6 +34,7 @@ public interface VideoDailyStatisticsRepository extends JpaRepository<VideoDaily
             Pageable pageable);
 
     // 재생 시간이 긴 TOP 5 동영상 가져오기
+    // VideoStatisticDto 객체로 비디오 ID와 재생 시간 합계를 반환하며, 재생 시간을 기준으로 내림차순으로 정렬
     @Query("SELECT new org.streaming.revenuemanagement.domain.videodailystatistics.dto.VideoStatisticDto(v.videoId, SUM(v.dailyPlayTime)) " +
             "FROM VideoDailyStatistics v " +
             "WHERE v.createdAt BETWEEN :start AND :end " +

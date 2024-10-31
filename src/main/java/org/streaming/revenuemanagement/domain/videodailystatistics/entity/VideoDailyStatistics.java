@@ -41,21 +41,25 @@ public class VideoDailyStatistics extends BaseEntity {
 
     @Builder
     public VideoDailyStatistics(VideoStatistics videoStatistics, Long videoId) {
+
         this.videoStatistics = videoStatistics;
         this.videoId = videoId;
     }
 
     public void updateStatistics(Long views, Long adViews, Long playTime) {
+
         this.dailyViews += views;
         this.dailyAdViews += adViews;
         this.dailyPlayTime += playTime;
     }
 
     public void updateAdjustment(Long adjustment) {
+
         this.dailyAdjustment += adjustment;
     }
 
     public void updateAdAdjustment(Long adAdjustment) {
+
         this.dailyAdAdjustment += adAdjustment;
     }
 }

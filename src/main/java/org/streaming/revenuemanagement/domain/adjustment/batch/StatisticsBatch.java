@@ -58,6 +58,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // Step1: VideoStatistics 별로 전날 조회수, 광고 조회수, 재생시간, 정산 데이터를 집계할 VideoDailyStatistics 객체 생성
     @Bean
     public Step statisticsStep1() {
 
@@ -107,6 +108,7 @@ public class StatisticsBatch {
     }
 
 
+    // Step2: VideoLog 데이터를 가지고 VideoDailyStatistics에 쌓는 단계
     @Bean
     public Step statisticsStep2() {
 
@@ -118,6 +120,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // 청크 사이즈 별로 VideoLog 데이터를 읽어와서 같은 영상에 대한 조회수, 광고 조회수, 재생시간 합계해 DTO로 반환
     @Bean
     public RepositoryItemReader<VideoLogStatisticsRespDto> videoLogStatisticsReader() {
 
@@ -134,6 +137,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // 각 비디오의 VideoDailyStatistics에 조회수, 광고 조회수, 재생시간 업데이트
     @Bean
     public ItemProcessor<VideoLogStatisticsRespDto, VideoDailyStatistics> videoLogStatisticsProcessor() {
 
@@ -150,12 +154,14 @@ public class StatisticsBatch {
                                 .videoId(videoId)
                                 .build());
 
+                // 기존 데이터에 새로운 통계 정보 업데이트
                 videoDailyStatistics.updateStatistics(views, adViews, playTime);
                 return videoDailyStatistics;
             }
         };
     }
 
+    // 그리고 VideoDailyStatistics들을 saveAll
     @Bean
     public ItemWriter<VideoDailyStatistics> videoLogVideoDailyStatisticsWriter() {
 
@@ -168,6 +174,7 @@ public class StatisticsBatch {
         };
     }
 
+    // Step3: VideoDailyStatistics 데이터를 통해 누적 합산 엔티티인 VideoStatistics 업데이트
     @Bean
     public Step statisticsStep3() {
 
@@ -179,12 +186,13 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // 당일 생성된 VideoDailyStatistics를 찾아옴
     @Bean
     public RepositoryItemReader<VideoDailyStatistics> videoDailyStatisticsReader() {
 
         LocalDate today = LocalDate.now();
-        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
-        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
         return new RepositoryItemReaderBuilder<VideoDailyStatistics>()
                 .name("videoDailyStatisticsReader")
@@ -196,6 +204,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // videoStatistics에 조회수, 광고 조회수, 재생시간 누적 합산 업데이트
     @Bean
     public ItemProcessor<VideoDailyStatistics, VideoStatistics> videoDailyStatisticsProcessor() {
 
@@ -221,6 +230,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // Step4: 정산 작업을 수행하는 단계
     @Bean
     public Step adjustmentStep1() {
 
@@ -249,6 +259,7 @@ public class StatisticsBatch {
                 .build();
     }
 
+    // 당일 생성된 VideoDailyStatistics의 데이터들을 기반으로 단가를 계산하고 업데이트
     @Bean
     public ItemProcessor<VideoDailyStatistics, VideoDailyStatistics> adjustmentVideoDailyStatisticsProcessor() {
 
@@ -268,6 +279,7 @@ public class StatisticsBatch {
                 // 광고별 단가 계산
                 long adAdjustment = calculateAdAdjustment(totalViews, dailyAdViews);
 
+                // 단가 계산 후 조회수 정산 및 광고 조회수 정산 비용 업데이트
                 videoDailyStatistics.updateAdjustment(videoAdjustment);
                 videoDailyStatistics.updateAdAdjustment(adAdjustment);
 
@@ -277,6 +289,7 @@ public class StatisticsBatch {
                 return videoDailyStatistics;
             }
 
+            // 요구사항대로 단가 계산하는 메서드
             private long calculateViewAdjustment(long totalViews, long dailyViews) {
                 long adjustment = 0;
 
@@ -335,6 +348,7 @@ public class StatisticsBatch {
         };
     }
 
+    // VideoDailyStatistics 및 VideoStatistics를 모두 저장
     @Bean
     public ItemWriter<VideoDailyStatistics> adjustmentVideoDailyStatisticsWriter() {
         return items -> {
@@ -353,6 +367,7 @@ public class StatisticsBatch {
         };
     }
 
+    // 두 개의 Repository를 사용하여 데이터를 한 번에 저장
     @Transactional
     public void saveAllVideoData(List<VideoDailyStatistics> videoDailyStatisticsList, List<VideoStatistics> videoStatisticsList) {
         // VideoDailyStatistics와 VideoStatistics를 모두 한 번에 저장
