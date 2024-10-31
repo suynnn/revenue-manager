@@ -22,3 +22,6 @@ spring:
     jdbc:
       initialize-schema: always
       schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+
+    chunk:
+      size: 1000

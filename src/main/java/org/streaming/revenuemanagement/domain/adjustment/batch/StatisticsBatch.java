@@ -13,13 +13,14 @@ import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.batch.item.data.builder.RepositoryItemWriterBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
-import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
+import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto;
 import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
 import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoStatisticsRepository;
@@ -27,7 +28,6 @@ import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoSt
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +42,9 @@ public class StatisticsBatch {
     private final VideoStatisticsRepository videoStatisticsRepository;
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
 
+    @Value("${spring.batch.chunk.size}")
+    private int chunkSize;
+
     @Bean
     public Job statisticsJob() {
 
@@ -49,6 +52,7 @@ public class StatisticsBatch {
                 .start(statisticsStep1())
                 .next(statisticsStep2())
                 .next(statisticsStep3())
+                .next(adjustmentStep1())
                 .build();
     }
 
@@ -56,7 +60,7 @@ public class StatisticsBatch {
     public Step statisticsStep1() {
 
         return new StepBuilder("statisticsStep1", jobRepository)
-                .<VideoStatistics, VideoDailyStatistics> chunk(10, platformTransactionManager)
+                .<VideoStatistics, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
                 .reader(videoStatisticsReader())
                 .processor(videoStatisticsProcessor())
                 .writer(videoDailyStatisticsWriter())
@@ -68,7 +72,7 @@ public class StatisticsBatch {
 
         return new RepositoryItemReaderBuilder<VideoStatistics>()
                 .name("videoStatisticsReader")
-                .pageSize(10)
+                .pageSize(chunkSize)
                 .methodName("findAll")
                 .repository(videoStatisticsRepository)
                 .sorts(Map.of("id", Sort.Direction.ASC))
@@ -105,55 +109,59 @@ public class StatisticsBatch {
     public Step statisticsStep2() {
 
         return new StepBuilder("statisticsStep2", jobRepository)
-                .<VideoLog, VideoLog> chunk(10, platformTransactionManager)
-                .reader(videoLogReader())
+                .<VideoLogStatisticsRespDto, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
+                .reader(videoLogStatisticsReader())
+                .processor(videoLogStatisticsProcessor())
                 .writer(videoLogVideoDailyStatisticsWriter())
                 .build();
     }
 
     @Bean
-    public RepositoryItemReader<VideoLog> videoLogReader() {
+    public RepositoryItemReader<VideoLogStatisticsRespDto> videoLogStatisticsReader() {
 
         LocalDateTime startOfYesterday = LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
         LocalDateTime endOfYesterday = LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59);
 
-        return new RepositoryItemReaderBuilder<VideoLog>()
-                .name("videoLogReader")
-                .arguments(List.of(startOfYesterday, endOfYesterday)) // 날짜 범위와 페이징 정보 전달
-                .pageSize(10)
-                .methodName("findAllByCreatedAtBetween")
+        return new RepositoryItemReaderBuilder<VideoLogStatisticsRespDto>()
+                .name("videoLogStatisticsReader")
+                .arguments(List.of(startOfYesterday, endOfYesterday))
+                .pageSize(chunkSize)
+                .methodName("findVideoStatisticsBetweenDates")
                 .repository(videoLogRepository)
-                .sorts(Map.of("id", Sort.Direction.ASC))
+                .sorts(Map.of())  // 정렬 필요 없음
                 .build();
     }
 
     @Bean
-    public ItemWriter<VideoLog> videoLogVideoDailyStatisticsWriter() {
+    public ItemProcessor<VideoLogStatisticsRespDto, VideoDailyStatistics> videoLogStatisticsProcessor() {
 
-        return new ItemWriter<VideoLog>() {
+        return new ItemProcessor<VideoLogStatisticsRespDto, VideoDailyStatistics>() {
             @Override
-            public void write(Chunk<? extends VideoLog> chunk) throws Exception {
-                // In-Memory 집계 데이터 구조
-                Map<Long, VideoDailyStatistics> statisticsMap = new HashMap<>();
+            public VideoDailyStatistics process(VideoLogStatisticsRespDto item) throws Exception {
+                Long videoId = item.getVideoId();
+                Long views = item.getViews();
+                Long adViews = item.getAdViews();
+                Long playTime = item.getPlayTime();
 
-                // VideoLog 데이터를 처리하여 VideoDailyStatistics에 누적
-                for (VideoLog videoLog : chunk) {
-                    Long videoId = videoLog.getVideo().getId();
+                VideoDailyStatistics videoDailyStatistics = videoDailyStatisticsRepository.findByVideoId(videoId)
+                        .orElseGet(() -> VideoDailyStatistics.builder()
+                                .videoId(videoId)
+                                .build());
 
-                    // 기존에 statisticsMap에 있으면 가져오고 없으면 DB에서 조회 또는 생성
-                    VideoDailyStatistics videoDailyStatistics = statisticsMap.computeIfAbsent(videoId, id ->
-                            videoDailyStatisticsRepository.findByVideoId(videoId).orElseThrow()
-                    );
+                videoDailyStatistics.updateStatistics(views, adViews, playTime);
+                return videoDailyStatistics;
+            }
+        };
+    }
 
-                    // 누적 값 계산
-                    videoDailyStatistics.updateStatistics(1L, Long.valueOf(videoLog.getAdCnt()), videoLog.getPlayTime());
+    @Bean
+    public ItemWriter<VideoDailyStatistics> videoLogVideoDailyStatisticsWriter() {
 
-                    // 맵에 저장하여 중복 조회 방지
-                    statisticsMap.put(videoId, videoDailyStatistics);
-                }
-
+        return new ItemWriter<VideoDailyStatistics>() {
+            @Override
+            public void write(Chunk<? extends VideoDailyStatistics> chunk) throws Exception {
                 // 데이터베이스에 일괄 저장
-                videoDailyStatisticsRepository.saveAll(statisticsMap.values());
+                videoDailyStatisticsRepository.saveAll(chunk.getItems());
             }
         };
     }
@@ -162,7 +170,7 @@ public class StatisticsBatch {
     public Step statisticsStep3() {
 
         return new StepBuilder("statisticsStep3", jobRepository)
-                .<VideoDailyStatistics, VideoStatistics> chunk(10, platformTransactionManager)
+                .<VideoDailyStatistics, VideoStatistics> chunk(chunkSize, platformTransactionManager)
                 .reader(videoDailyStatisticsReader())
                 .processor(videoDailyStatisticsProcessor())
                 .writer(videoStatisticsWriter())
@@ -179,7 +187,7 @@ public class StatisticsBatch {
         return new RepositoryItemReaderBuilder<VideoDailyStatistics>()
                 .name("videoDailyStatisticsReader")
                 .arguments(List.of(startOfDay, endOfDay)) // 날짜 범위와 페이징 정보 전달
-                .pageSize(10)
+                .pageSize(chunkSize)
                 .methodName("findAllByCreatedAtBetween")
                 .repository(videoDailyStatisticsRepository)
                 .sorts(Map.of("id", Sort.Direction.ASC))
@@ -209,5 +217,133 @@ public class StatisticsBatch {
                 .repository(videoStatisticsRepository)
                 .methodName("save")
                 .build();
+    }
+
+    @Bean
+    public Step adjustmentStep1() {
+
+        return new StepBuilder("adjustmentStep1", jobRepository)
+                .<VideoDailyStatistics, VideoDailyStatistics> chunk(10, platformTransactionManager)
+                .reader(adjustmentVideoDailyStatisticsReader())
+                .processor(adjustmentVideoDailyStatisticsProcessor())
+                .writer(adjustmentVideoDailyStatisticsWriter())
+                .build();
+    }
+
+    @Bean
+    public RepositoryItemReader<VideoDailyStatistics> adjustmentVideoDailyStatisticsReader() {
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 오늘 00:00:00
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 오늘 23:59:59
+
+        return new RepositoryItemReaderBuilder<VideoDailyStatistics>()
+                .name("adjustmentVideoDailyStatisticsReader")
+                .arguments(List.of(startOfDay, endOfDay))
+                .pageSize(10)
+                .methodName("findAllByCreatedAtBetween")
+                .repository(videoDailyStatisticsRepository)
+                .sorts(Map.of("id", Sort.Direction.ASC))
+                .build();
+    }
+
+    @Bean
+    public ItemProcessor<VideoDailyStatistics, VideoDailyStatistics> adjustmentVideoDailyStatisticsProcessor() {
+
+        return new ItemProcessor<VideoDailyStatistics, VideoDailyStatistics>() {
+
+            @Override
+            public VideoDailyStatistics process(VideoDailyStatistics videoDailyStatistics) throws Exception {
+
+                VideoStatistics videoStatistics = videoDailyStatistics.getVideoStatistics();
+                long totalViews = videoStatistics.getTotalViews() + videoDailyStatistics.getDailyViews();
+                long dailyViews = videoDailyStatistics.getDailyViews();
+                long dailyAdViews = videoDailyStatistics.getDailyAdViews();
+
+                // 영상별 단가 계산
+                long videoAdjustment = calculateViewAdjustment(totalViews, dailyViews);
+
+                // 광고별 단가 계산
+                long adAdjustment = calculateAdAdjustment(totalViews, dailyAdViews);
+
+                videoDailyStatistics.updateAdjustment(videoAdjustment);
+                videoDailyStatistics.updateAdAdjustment(adAdjustment);
+
+                videoStatistics.updateAdjustment(videoAdjustment);
+                videoStatistics.updateAdAdjustment(adAdjustment);
+
+                return videoDailyStatistics;
+            }
+
+            private long calculateViewAdjustment(long totalViews, long dailyViews) {
+                long adjustment = 0;
+
+                if (totalViews < 100_000) {
+                    adjustment += Math.min(100_000 - totalViews, dailyViews) * 1;
+                    dailyViews -= Math.min(100_000 - totalViews, dailyViews);
+                    totalViews = Math.min(100_000, totalViews + dailyViews);
+                }
+
+                if (totalViews >= 100_000 && totalViews < 500_000 && dailyViews > 0) {
+                    adjustment += Math.min(500_000 - totalViews, dailyViews) * 1.1;
+                    dailyViews -= Math.min(500_000 - totalViews, dailyViews);
+                    totalViews = Math.min(500_000, totalViews + dailyViews);
+                }
+
+                if (totalViews >= 500_000 && totalViews < 1_000_000 && dailyViews > 0) {
+                    adjustment += Math.min(1_000_000 - totalViews, dailyViews) * 1.3;
+                    dailyViews -= Math.min(1_000_000 - totalViews, dailyViews);
+                    totalViews = Math.min(1_000_000, totalViews + dailyViews);
+                }
+
+                if (totalViews >= 1_000_000 && dailyViews > 0) {
+                    adjustment += dailyViews * 1.5;
+                }
+
+                return (long) Math.floor(adjustment); // 1원 단위 이하 절사
+            }
+
+            private long calculateAdAdjustment(long totalViews, long dailyAdViews) {
+                long adjustment = 0;
+
+                if (totalViews < 100_000) {
+                    adjustment += Math.min(100_000 - totalViews, dailyAdViews) * 10;
+                    dailyAdViews -= Math.min(100_000 - totalViews, dailyAdViews);
+                    totalViews = Math.min(100_000, totalViews + dailyAdViews);
+                }
+
+                if (totalViews >= 100_000 && totalViews < 500_000 && dailyAdViews > 0) {
+                    adjustment += Math.min(500_000 - totalViews, dailyAdViews) * 12;
+                    dailyAdViews -= Math.min(500_000 - totalViews, dailyAdViews);
+                    totalViews = Math.min(500_000, totalViews + dailyAdViews);
+                }
+
+                if (totalViews >= 500_000 && totalViews < 1_000_000 && dailyAdViews > 0) {
+                    adjustment += Math.min(1_000_000 - totalViews, dailyAdViews) * 15;
+                    dailyAdViews -= Math.min(1_000_000 - totalViews, dailyAdViews);
+                    totalViews = Math.min(1_000_000, totalViews + dailyAdViews);
+                }
+
+                if (totalViews >= 1_000_000 && dailyAdViews > 0) {
+                    adjustment += dailyAdViews * 20;
+                }
+
+                return (long) Math.floor(adjustment); // 1원 단위 이하 절사
+            }
+        };
+    }
+
+    @Bean
+    public ItemWriter<VideoDailyStatistics> adjustmentVideoDailyStatisticsWriter() {
+        return items -> {
+            for (VideoDailyStatistics dailyStatistics : items) {
+                // VideoDailyStatistics 저장
+                videoDailyStatisticsRepository.save(dailyStatistics);
+
+                // 연관된 VideoStatistics 저장
+                VideoStatistics videoStatistics = dailyStatistics.getVideoStatistics();
+                videoStatisticsRepository.save(videoStatistics);
+            }
+        };
     }
 }
