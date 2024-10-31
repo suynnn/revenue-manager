@@ -86,6 +86,7 @@
     let advertisementIntervalId;
     let currentTime = 0; // 현재 시청 시간 초기값
     let isPaused = false; // 일시멈춤 상태 확인용 변수
+    let adCount = 0; // 광고 시청 횟수 초기값
 
     // 페이지가 로드될 때, videoLogRespDto에서 endWatchTime이 있으면 해당 시점으로 이동
     window.onload = function () {
@@ -129,7 +130,8 @@
                     endWatchTime: videoLogRespDto ? videoLogRespDto.endWatchTime + currentTime : currentTime,
                     playTime: currentTime,
                     isWatchCompleted: isWatchCompleted,
-                    uuid: uuid
+                    uuid: uuid,
+                    adCnt: adCount // 광고 시청 횟수 추가
                 };
                 sendWatchStatus(videoLogReqDto);
 
@@ -139,6 +141,7 @@
                         const randomIndex = Math.floor(Math.random() * advertisementIds.length);
                         const advertisementId = advertisementIds[randomIndex];
                         watchAdvertisement(advertisementId, videoId);
+                        adCount++; // 광고 시청 횟수 증가
                     } else {
                         console.log("광고 ID 리스트가 비어있습니다.");
                     }

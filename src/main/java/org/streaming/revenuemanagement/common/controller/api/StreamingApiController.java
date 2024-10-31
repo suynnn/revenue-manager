@@ -1,4 +1,4 @@
-package org.streaming.revenuemanagement.domain.streaming.controller;
+package org.streaming.revenuemanagement.common.controller.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
