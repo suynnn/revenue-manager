@@ -32,6 +32,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Configuration
 @RequiredArgsConstructor
@@ -113,7 +114,7 @@ public class StatisticsBatch {
     public Step statisticsStep2() {
 
         return new StepBuilder("statisticsStep2", jobRepository)
-                .<VideoLogStatisticsRespDto, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
+                .<VideoStatistics, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
                 .reader(videoLogStatisticsReader())
                 .processor(videoLogStatisticsProcessor())
                 .writer(videoLogVideoDailyStatisticsWriter())
@@ -122,41 +123,45 @@ public class StatisticsBatch {
 
     // 청크 사이즈 별로 VideoLog 데이터를 읽어와서 같은 영상에 대한 조회수, 광고 조회수, 재생시간 합계해 DTO로 반환
     @Bean
-    public RepositoryItemReader<VideoLogStatisticsRespDto> videoLogStatisticsReader() {
+    public RepositoryItemReader<VideoStatistics> videoLogStatisticsReader() {
 
-        LocalDateTime startOfYesterday = LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime endOfYesterday = LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59);
-
-        return new RepositoryItemReaderBuilder<VideoLogStatisticsRespDto>()
+        return new RepositoryItemReaderBuilder<VideoStatistics>()
                 .name("videoLogStatisticsReader")
-                .arguments(List.of(startOfYesterday, endOfYesterday))
                 .pageSize(chunkSize)
-                .methodName("findVideoStatisticsBetweenDates")
-                .repository(videoLogRepository)
-                .sorts(Map.of())  // 정렬 필요 없음
+                .methodName("findAll")
+                .repository(videoStatisticsRepository)
+                .sorts(Map.of("id", Sort.Direction.ASC))
                 .build();
     }
 
     // 각 비디오의 VideoDailyStatistics에 조회수, 광고 조회수, 재생시간 업데이트
     @Bean
-    public ItemProcessor<VideoLogStatisticsRespDto, VideoDailyStatistics> videoLogStatisticsProcessor() {
+    public ItemProcessor<VideoStatistics, VideoDailyStatistics> videoLogStatisticsProcessor() {
 
-        return new ItemProcessor<VideoLogStatisticsRespDto, VideoDailyStatistics>() {
+        return new ItemProcessor<VideoStatistics, VideoDailyStatistics>() {
             @Override
-            public VideoDailyStatistics process(VideoLogStatisticsRespDto item) throws Exception {
-                Long videoId = item.getVideoId();
-                Long views = item.getViews();
-                Long adViews = item.getAdViews();
-                Long playTime = item.getPlayTime();
+            public VideoDailyStatistics process(VideoStatistics videoStatistics) throws Exception {
+                Long videoId = videoStatistics.getVideo().getId();
+                LocalDateTime startOfYesterday = LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0);
+                LocalDateTime endOfYesterday = LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59);
 
-                VideoDailyStatistics videoDailyStatistics = videoDailyStatisticsRepository.findByVideoId(videoId)
-                        .orElseGet(() -> VideoDailyStatistics.builder()
-                                .videoId(videoId)
-                                .build());
+                // 비디오 ID로 VideoLog 데이터를 집계
+                Optional<VideoLogStatisticsRespDto> videoLogStats = videoLogRepository.findVideoStatisticsByVideoIdAndDateRange(
+                        videoId, startOfYesterday, endOfYesterday);
 
-                // 기존 데이터에 새로운 통계 정보 업데이트
-                videoDailyStatistics.updateStatistics(views, adViews, playTime);
-                return videoDailyStatistics;
+                if (videoLogStats.isPresent()) {
+                    VideoLogStatisticsRespDto stats = videoLogStats.get();
+
+                    // VideoDailyStatistics 객체 업데이트
+                    VideoDailyStatistics videoDailyStatistics = videoDailyStatisticsRepository.findByVideoId(videoId)
+                            .orElseGet(() -> VideoDailyStatistics.builder()
+                                    .videoId(videoId)
+                                    .build());
+
+                    videoDailyStatistics.updateStatistics(stats.getViews(), stats.getAdViews(), stats.getPlayTime());
+                    return videoDailyStatistics;
+                }
+                return null;  // 로그 데이터가 없을 경우 null 반환 (해당 청크 무시)
             }
         };
     }

@@ -26,4 +26,12 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
             "GROUP BY v.video.id")
     Page<VideoLogStatisticsRespDto> findVideoStatisticsBetweenDates(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
 
+    @Query("SELECT new org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
+            "FROM VideoLog v " +
+            "WHERE v.video.id = :videoId AND v.createdAt BETWEEN :start AND :end " +
+            "GROUP BY v.video.id")
+    Optional<VideoLogStatisticsRespDto> findVideoStatisticsByVideoIdAndDateRange(@Param("videoId") Long videoId,
+                                                                                 @Param("start") LocalDateTime start,
+                                                                                 @Param("end") LocalDateTime end);
+
 }
