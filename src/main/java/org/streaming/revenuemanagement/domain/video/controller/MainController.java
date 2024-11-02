@@ -1,4 +1,4 @@
-package org.streaming.revenuemanagement.common.controller;
+package org.streaming.revenuemanagement.domain.video.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

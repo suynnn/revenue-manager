@@ -1,4 +1,4 @@
-package org.streaming.revenuemanagement.common.controller.api;
+package org.streaming.revenuemanagement.domain.videostatistics.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
