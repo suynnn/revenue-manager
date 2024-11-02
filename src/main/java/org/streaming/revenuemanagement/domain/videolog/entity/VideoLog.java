@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
+import org.revenue.management.common.entity.BaseEntity;
 import org.streaming.revenuemanagement.domain.member.entity.Member;
 import org.streaming.revenuemanagement.domain.video.entity.Video;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;

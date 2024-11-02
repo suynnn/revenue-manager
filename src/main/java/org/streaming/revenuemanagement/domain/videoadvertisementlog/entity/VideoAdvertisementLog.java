@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.streaming.revenuemanagement.domain.advertisement.entity.Advertisement;
-import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
+import org.revenue.management.common.entity.BaseEntity;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 
 @Entity

@@ -3,7 +3,7 @@ package org.streaming.revenuemanagement.domain.video.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
+import org.revenue.management.common.entity.BaseEntity;
 import org.streaming.revenuemanagement.domain.member.entity.Creator;
 
 @Entity

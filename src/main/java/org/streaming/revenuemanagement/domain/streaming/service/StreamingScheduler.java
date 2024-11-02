@@ -2,13 +2,13 @@ package org.streaming.revenuemanagement.domain.streaming.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.revenue.management.member.entity.Member;
+import org.revenue.management.member.repository.MemberRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.streaming.revenuemanagement.domain.advertisement.entity.Advertisement;
 import org.streaming.revenuemanagement.domain.advertisement.repository.AdvertisementRepository;
-import org.streaming.revenuemanagement.domain.member.entity.Member;
-import org.streaming.revenuemanagement.domain.member.repository.MemberRepository;
 import org.streaming.revenuemanagement.domain.video.entity.Video;
 import org.streaming.revenuemanagement.domain.video.repository.VideoRepository;
 import org.streaming.revenuemanagement.domain.videoadvertisementlog.entity.VideoAdvertisementLog;
