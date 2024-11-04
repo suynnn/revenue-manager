@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.streaming.revenuemanagement.domain.global.entity.BaseEntity;
+import org.revenue.management.common.entity.BaseEntity;
 
 @Entity
 @Table

@@ -2,3 +2,5 @@ rootProject.name = 'revenue-management'
 
 include 'common'
 include 'member'
+include 'streaming'
+include 'batch'
