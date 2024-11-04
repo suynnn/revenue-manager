@@ -20,13 +20,13 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
 
     // 특정 기간 동안의 비디오 통계를 조회하여 VideoLogStatisticsRespDto 객체로 반환
     // 비디오별로 광고 수(adCnt), 재생 시간(playTime), 그리고 로그 개수를 그룹화하여 통계 제공
-    @Query("SELECT new org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
+    @Query("SELECT new org.revenue.management.streaming.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
             "FROM VideoLog v " +
             "WHERE v.createdAt BETWEEN :start AND :end " +
             "GROUP BY v.video.id")
     Page<VideoLogStatisticsRespDto> findVideoStatisticsBetweenDates(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
 
-    @Query("SELECT new org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
+    @Query("SELECT new org.revenue.management.streaming.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
             "FROM VideoLog v " +
             "WHERE v.video.id = :videoId AND v.createdAt BETWEEN :start AND :end " +
             "GROUP BY v.video.id")
