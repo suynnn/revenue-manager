@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: streaming
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  profiles:
+    active: local
+    include: oauth, jwt
+
+  batch:
+    job:
+      enabled: false
+
+    jdbc:
+      initialize-schema: always
+      schema: classpath:org/springframework/batch/core/schema-postgresql.sql
+
+    chunk:
+      size: 1000
+
+server:
+  port: 8081
