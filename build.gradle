@@ -29,6 +29,7 @@ dependencies {
     implementation project(':streaming')
     implementation project(':batch')
     implementation project(':eureka-server')
+    implementation project(':gateway-service')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
