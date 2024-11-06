@@ -2,6 +2,9 @@ spring:
   application:
     name: gateway-service
 
+  profiles:
+    include: oauth, jwt
+
   cloud:
     gateway:
       routes:
