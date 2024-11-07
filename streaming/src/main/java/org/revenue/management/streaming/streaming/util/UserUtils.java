@@ -1,7 +1,7 @@
 package org.revenue.management.streaming.streaming.util;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.revenue.management.member.oauth2.userinfo.CustomOAuth2User;
+import org.revenue.management.gatewayservice.oauth2.userinfo.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package org.revenue.management.member.jwt;
+package org.revenue.management.gatewayservice.jwt;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

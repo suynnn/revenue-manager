@@ -1,7 +1,7 @@
 package org.revenue.management.streaming.video.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.revenue.management.member.oauth2.userinfo.CustomOAuth2User;
+import org.revenue.management.gatewayservice.oauth2.userinfo.CustomOAuth2User;
 import org.revenue.management.streaming.videolog.dto.VideoLogRespDto;
 import org.revenue.management.streaming.videolog.service.VideoLogService;
 import org.springframework.security.core.Authentication;

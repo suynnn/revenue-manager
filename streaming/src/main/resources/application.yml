@@ -2,6 +2,9 @@ spring:
   application:
     name: streaming
 
+  main:
+    allow-bean-definition-overriding: true
+
   jpa:
     hibernate:
       ddl-auto: update

@@ -1,4 +1,4 @@
-package org.revenue.management.member.oauth2.dto;
+package org.revenue.management.gatewayservice.oauth2.dto;
 
 import org.revenue.management.member.entity.SocialType;
 

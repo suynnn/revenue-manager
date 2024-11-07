@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"org.revenue.management.batch", "org.revenue.management.common",
-        "org.revenue.management.member"})
+@ComponentScan(basePackages = {"org.revenue.management.common",
+        "org.revenue.management.member", "org.revenue.management.gatewayservice"})
 public class StreamingApplication {
 
     public static void main(String[] args) {

@@ -1,6 +1,9 @@
-package org.revenue.management.member.oauth2.service;
+package org.revenue.management.gatewayservice.oauth2.service;
 
 import lombok.RequiredArgsConstructor;
+import org.revenue.management.gatewayservice.oauth2.dto.GoogleResponse;
+import org.revenue.management.gatewayservice.oauth2.dto.OAuth2Response;
+import org.revenue.management.gatewayservice.oauth2.userinfo.CustomOAuth2User;
 import org.revenue.management.member.dto.MemberDto;
 import org.revenue.management.member.entity.Member;
 import org.revenue.management.member.entity.Role;
@@ -10,9 +13,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.revenue.management.member.oauth2.dto.GoogleResponse;
-import org.revenue.management.member.oauth2.dto.OAuth2Response;
-import org.revenue.management.member.oauth2.userinfo.CustomOAuth2User;
 
 @Service
 @RequiredArgsConstructor

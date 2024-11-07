@@ -1,4 +1,4 @@
-package org.revenue.management.member.oauth2.userinfo;
+package org.revenue.management.gatewayservice.oauth2.userinfo;
 
 import org.revenue.management.member.dto.MemberDto;
 import org.springframework.security.core.GrantedAuthority;
