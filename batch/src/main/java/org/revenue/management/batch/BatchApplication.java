@@ -1,16 +1,16 @@
-package org.streaming.revenuemanagement;
+package org.revenue.management.batch;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"org.revenue.management.batch", "org.revenue.management.common",
+@ComponentScan(basePackages = {"org.revenue.management.common",
         "org.revenue.management.member", "org.revenue.management.streaming"})
-public class RevenueManagementApplication {
+public class BatchApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(RevenueManagementApplication.class, args);
+        SpringApplication.run(BatchApplication.class, args);
     }
 
 }
