@@ -22,7 +22,7 @@ public class BatchScheduler {
         this.statisticsJob = statisticsJob;
     }
 
-    @Scheduled(cron = "0 52 20 * * *")
+    @Scheduled(cron = "0 39 00 * * *")
     public void runStatisticsJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()
