@@ -25,6 +25,7 @@ import org.streaming.revenuemanagement.domain.adjustment.batch.writer.Adjustment
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoDailyStatisticsWriter;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoStatisticsWriter;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
+import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
 import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoStatisticsRepository;
 
@@ -38,7 +39,7 @@ public class StatisticsBatch {
 
     private final VideoStatisticsReader videoStatisticsReader;
 
-    private final RepositoryItemReader<VideoStatistics> videoStatisticsPartitionReader;
+    private final RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod;
     private final VideoDailyStatisticsReader videoDailyStatisticsReader;
     private final AdjustmentVideoDailyStatisticsReader adjustmentVideoDailyStatisticsReader;
 
@@ -107,8 +108,8 @@ public class StatisticsBatch {
     @Bean
     public Step statisticsStep2() {
         return new StepBuilder("statisticsStep2", jobRepository)
-                .<VideoStatistics, VideoDailyStatistics>chunk(chunkSize, platformTransactionManager)
-                .reader(videoStatisticsPartitionReader)
+                .<VideoLog, VideoDailyStatistics>chunk(chunkSize, platformTransactionManager)
+                .reader(videoLogPartitionReaderMethod)
                 .processor(videoLogStatisticsProcessor)
                 .writer(videoDailyStatisticsWriter)
                 .build();

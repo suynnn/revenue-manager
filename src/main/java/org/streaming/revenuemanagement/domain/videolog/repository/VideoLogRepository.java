@@ -34,13 +34,11 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
                                                                                  @Param("start") LocalDateTime start,
                                                                                  @Param("end") LocalDateTime end);
 
-    @Query("SELECT new org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto(v.video.id, COUNT(v), SUM(v.adCnt), SUM(v.playTime)) " +
-            "FROM VideoLog v " +
-            "WHERE v.video.id BETWEEN :minId AND :maxId AND v.createdAt BETWEEN :start AND :end " +
-            "GROUP BY v.video.id")
-    Page<VideoLogStatisticsRespDto> findVideoStatisticsInRange(@Param("minId") Long minId,
-                                                               @Param("maxId") Long maxId,
-                                                               @Param("start") LocalDateTime start,
-                                                               @Param("end") LocalDateTime end,
-                                                               Pageable pageable);
+    @Query("SELECT v FROM VideoLog v " +
+            "WHERE v.video.id BETWEEN :minId AND :maxId AND v.createdAt BETWEEN :start AND :end")
+    Page<VideoLog> findVideoLogsByVideoIdRangeAndDateRange(@Param("minId") Long minId,
+                                                           @Param("maxId") Long maxId,
+                                                           @Param("start") LocalDateTime start,
+                                                           @Param("end") LocalDateTime end,
+                                                           Pageable pageable);
 }
