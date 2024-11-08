@@ -1,8 +1,11 @@
 package org.streaming.revenuemanagement.domain.adjustment.batch;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -16,7 +19,9 @@ import org.springframework.batch.item.data.builder.RepositoryItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
@@ -34,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class StatisticsBatch {
@@ -48,12 +54,33 @@ public class StatisticsBatch {
     @Value("${spring.batch.chunk.size}")
     private int chunkSize;
 
+    @Value("${spring.batch.pool.size}")
+    private int pool;
+
+    @Bean(name = "statisticsJob_taskPool")
+    public TaskExecutor executor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(pool);
+        executor.setMaxPoolSize(pool);
+        executor.setThreadNamePrefix("partition-thread");
+        executor.setWaitForTasksToCompleteOnShutdown(Boolean.TRUE);
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "statisticsJob_partitioner")
+    @JobScope
+    public VideoStatisticsPartitioner partitioner() {
+
+        return new VideoStatisticsPartitioner(videoStatisticsRepository);
+    }
+
     @Bean
     public Job statisticsJob() {
 
         return new JobBuilder("statisticsJob", jobRepository)
                 .start(statisticsStep1())
-                .next(statisticsStep2())
+                .next(step2Manager())
                 .next(statisticsStep3())
                 .next(adjustmentStep1())
                 .build();
@@ -108,6 +135,15 @@ public class StatisticsBatch {
                 .build();
     }
 
+    @Bean
+    public Step step2Manager() {
+        return new StepBuilder("statisticsStep2.manager", jobRepository)
+                .partitioner("statisticsStep2", partitioner())
+                .step(statisticsStep2())
+                .taskExecutor(executor())
+                .build();
+    }
+
 
     // Step2: VideoLog 데이터를 가지고 VideoDailyStatistics에 쌓는 단계
     @Bean
@@ -115,21 +151,26 @@ public class StatisticsBatch {
 
         return new StepBuilder("statisticsStep2", jobRepository)
                 .<VideoStatistics, VideoDailyStatistics> chunk(chunkSize, platformTransactionManager)
-                .reader(videoLogStatisticsReader())
+                .reader(videoStatisticsPartitionReader(null, null))
                 .processor(videoLogStatisticsProcessor())
                 .writer(videoLogVideoDailyStatisticsWriter())
                 .build();
     }
 
-    // 청크 사이즈 별로 VideoLog 데이터를 읽어와서 같은 영상에 대한 조회수, 광고 조회수, 재생시간 합계해 DTO로 반환
     @Bean
-    public RepositoryItemReader<VideoStatistics> videoLogStatisticsReader() {
+    @StepScope
+    public RepositoryItemReader<VideoStatistics> videoStatisticsPartitionReader(
+            @Value("#{stepExecutionContext[minId]}") Long minId,
+            @Value("#{stepExecutionContext[maxId]}") Long maxId) {
+
+        log.info("Partition Reader initialized with minId: {} and maxId: {}", minId, maxId);
 
         return new RepositoryItemReaderBuilder<VideoStatistics>()
-                .name("videoLogStatisticsReader")
+                .name("videoStatisticsPartitionReader")
                 .pageSize(chunkSize)
-                .methodName("findAll")
+                .methodName("findByIdBetween")
                 .repository(videoStatisticsRepository)
+                .arguments(List.of(minId, maxId))
                 .sorts(Map.of("id", Sort.Direction.ASC))
                 .build();
     }
@@ -152,6 +193,9 @@ public class StatisticsBatch {
                 if (videoLogStats.isPresent()) {
                     VideoLogStatisticsRespDto stats = videoLogStats.get();
 
+                    log.info("Found log stats for Video ID {}: Views {}, Ad Views {}, Play Time {}",
+                            videoId, stats.getViews(), stats.getAdViews(), stats.getPlayTime());
+
                     // VideoDailyStatistics 객체 업데이트
                     VideoDailyStatistics videoDailyStatistics = videoDailyStatisticsRepository.findByVideoId(videoId)
                             .orElseGet(() -> VideoDailyStatistics.builder()
@@ -160,6 +204,8 @@ public class StatisticsBatch {
 
                     videoDailyStatistics.updateStatistics(stats.getViews(), stats.getAdViews(), stats.getPlayTime());
                     return videoDailyStatistics;
+                } else {
+                    log.info("No log stats found for Video ID: {}", videoId);
                 }
                 return null;  // 로그 데이터가 없을 경우 null 반환 (해당 청크 무시)
             }

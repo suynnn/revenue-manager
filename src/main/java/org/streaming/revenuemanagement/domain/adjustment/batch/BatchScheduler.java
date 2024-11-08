@@ -22,11 +22,11 @@ public class BatchScheduler {
         this.statisticsJob = statisticsJob;
     }
 
-    @Scheduled(cron = "0 25 21 * * *")
+    @Scheduled(cron = "0 52 20 * * *")
     public void runStatisticsJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()
-                    .addLong("currentTime", System.currentTimeMillis())
+                    .addLong("currentTime", System.currentTimeMillis()) // 매 실행 시 유니크한 파라미터 추가 (중복 방지용)
                     .toJobParameters();
             jobLauncher.run(statisticsJob, jobParameters);
         } catch (Exception e) {
