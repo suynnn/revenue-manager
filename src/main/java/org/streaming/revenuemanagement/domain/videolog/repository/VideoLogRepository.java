@@ -34,4 +34,21 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
                                                                                  @Param("start") LocalDateTime start,
                                                                                  @Param("end") LocalDateTime end);
 
+    @Query("SELECT v FROM VideoLog v " +
+            "WHERE v.video.id BETWEEN :minId AND :maxId")
+    Page<VideoLog> findVideoLogsByVideoIdRangeAndDateRange(@Param("minId") Long minId,
+                                                           @Param("maxId") Long maxId,
+                                                           Pageable pageable);
+
+    // 특정 기간 동안의 모든 VideoLog를 가져오는 메서드
+    @Query("SELECT v FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
+    Page<VideoLog> findVideoLogsByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
+
+    @Query("SELECT COALESCE(MIN(v.id), 0) FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
+    long findMinId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    // 특정 기간 동안의 최대 VideoLog ID를 조회
+    @Query("SELECT COALESCE(MAX(v.id), 0) FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
+    long findMaxId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
+

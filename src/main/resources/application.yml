@@ -25,3 +25,6 @@ spring:
 
     chunk:
       size: 1000
+
+    pool:
+      size: 5
