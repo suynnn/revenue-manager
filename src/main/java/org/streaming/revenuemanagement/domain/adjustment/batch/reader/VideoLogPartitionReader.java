@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -28,15 +27,13 @@ public class VideoLogPartitionReader {
     public RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod(
             @Value("#{stepExecutionContext['minId']}") Long minId,
             @Value("#{stepExecutionContext['maxId']}") Long maxId,
-            @Value("#{jobParameters['startDate']}") LocalDateTime start,
-            @Value("#{jobParameters['endDate']}") LocalDateTime end,
             @Value("${spring.batch.chunk.size}") Integer chunkSize) {
 
         return new RepositoryItemReaderBuilder<VideoLog>()
                 .name("videoLogPartitionReader")
                 .repository(videoLogRepository)
                 .methodName("findVideoLogsByVideoIdRangeAndDateRange")
-                .arguments(Arrays.asList(minId, maxId, start, end))
+                .arguments(Arrays.asList(minId, maxId))
                 .sorts(Map.of("id", Sort.Direction.ASC)) // 여기에 정렬 조건 추가
                 .pageSize(chunkSize)
                 .build();

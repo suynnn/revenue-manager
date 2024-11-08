@@ -26,15 +26,15 @@ import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoDaily
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoStatisticsWriter;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
+import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
-import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoStatisticsRepository;
 
 @Configuration
 @RequiredArgsConstructor
 public class StatisticsBatch {
 
     private final JobRepository jobRepository;
-    private final VideoStatisticsRepository videoStatisticsRepository;
+    private final VideoLogRepository videoLogRepository;
     private final PlatformTransactionManager platformTransactionManager;
 
     private final VideoStatisticsReader videoStatisticsReader;
@@ -71,8 +71,11 @@ public class StatisticsBatch {
 
     @Bean(name = "statisticsJob_partitioner")
     @JobScope
-    public VideoStatisticsPartitioner partitioner() {
-        return new VideoStatisticsPartitioner(videoStatisticsRepository);
+    public VideoStatisticsPartitioner partitioner(
+            @Value("#{jobParameters['startDate']}") String startDate,
+            @Value("#{jobParameters['endDate']}") String endDate
+    ) {
+        return new VideoStatisticsPartitioner(videoLogRepository, startDate, endDate);
     }
 
     @Bean
@@ -98,7 +101,7 @@ public class StatisticsBatch {
     @Bean
     public Step step2Manager() {
         return new StepBuilder("statisticsStep2.manager", jobRepository)
-                .partitioner("statisticsStep2", partitioner())
+                .partitioner("statisticsStep2", partitioner(null, null))
                 .gridSize(pool)
                 .step(statisticsStep2())
                 .taskExecutor(executor())
