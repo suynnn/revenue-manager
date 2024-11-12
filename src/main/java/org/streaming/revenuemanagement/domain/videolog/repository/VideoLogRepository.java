@@ -34,9 +34,8 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
                                                                                  @Param("start") LocalDateTime start,
                                                                                  @Param("end") LocalDateTime end);
 
-    @Query("SELECT v FROM VideoLog v " +
-            "WHERE v.video.id BETWEEN :minId AND :maxId")
-    Page<VideoLog> findVideoLogsByVideoIdRangeAndDateRange(@Param("minId") Long minId,
+    @Query("SELECT v FROM VideoLog v WHERE v.id BETWEEN :minId AND :maxId")
+    Page<VideoLog> findVideoLogsByIdRange(@Param("minId") Long minId,
                                                            @Param("maxId") Long maxId,
                                                            Pageable pageable);
 

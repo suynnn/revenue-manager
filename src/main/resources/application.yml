@@ -24,7 +24,7 @@ spring:
       schema: classpath:org/springframework/batch/core/schema-postgresql.sql
 
     chunk:
-      size: 1000
+      size: 500
 
     pool:
       size: 5

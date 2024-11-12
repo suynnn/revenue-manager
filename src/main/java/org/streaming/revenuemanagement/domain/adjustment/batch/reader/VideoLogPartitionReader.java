@@ -29,10 +29,12 @@ public class VideoLogPartitionReader {
             @Value("#{stepExecutionContext['maxId']}") Long maxId,
             @Value("${spring.batch.chunk.size}") Integer chunkSize) {
 
+        log.info("minId, maxId, chunkSize = {}, {}, {}", minId, maxId, chunkSize);
+
         return new RepositoryItemReaderBuilder<VideoLog>()
                 .name("videoLogPartitionReader")
                 .repository(videoLogRepository)
-                .methodName("findVideoLogsByVideoIdRangeAndDateRange")
+                .methodName("findVideoLogsByIdRange")
                 .arguments(Arrays.asList(minId, maxId))
                 .sorts(Map.of("id", Sort.Direction.ASC)) // 여기에 정렬 조건 추가
                 .pageSize(chunkSize)

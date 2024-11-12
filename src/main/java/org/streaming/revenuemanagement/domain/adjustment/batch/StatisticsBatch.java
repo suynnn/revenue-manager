@@ -1,6 +1,7 @@
 package org.streaming.revenuemanagement.domain.adjustment.batch;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -8,6 +9,8 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,15 +23,20 @@ import org.streaming.revenuemanagement.domain.adjustment.batch.processor.VideoLo
 import org.streaming.revenuemanagement.domain.adjustment.batch.processor.VideoStatisticsProcessor;
 import org.streaming.revenuemanagement.domain.adjustment.batch.reader.AdjustmentVideoDailyStatisticsReader;
 import org.streaming.revenuemanagement.domain.adjustment.batch.reader.VideoDailyStatisticsReader;
+import org.streaming.revenuemanagement.domain.adjustment.batch.reader.VideoLogReader;
 import org.streaming.revenuemanagement.domain.adjustment.batch.reader.VideoStatisticsReader;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.AdjustmentVideoDailyStatisticsWriter;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoDailyStatisticsWriter;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.VideoStatisticsWriter;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
+import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
 
+import java.util.List;
+
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class StatisticsBatch {
@@ -39,7 +47,12 @@ public class StatisticsBatch {
 
     private final VideoStatisticsReader videoStatisticsReader;
 
-    private final RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod;
+    private final VideoLogReader videoLogReader;
+
+    @Autowired
+    @Qualifier("videoLogPartitionReaderMethod")
+    private RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod;
+
     private final VideoDailyStatisticsReader videoDailyStatisticsReader;
     private final AdjustmentVideoDailyStatisticsReader adjustmentVideoDailyStatisticsReader;
 
