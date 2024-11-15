@@ -30,7 +30,7 @@
 
 
 # 🧑‍💻 기술적 도전
-- [MySQL이 아닌 PostgreSQL을 선택한 이유](https://colorful-math-aeb.notion.site/MySQL-PostgreSQL-13bea62dd7178017b596f46fd334ea96?pvs=4) <br />
+- [-](https://colorful-math-aeb.notion.site/MySQL-PostgreSQL-13bea62dd7178017b596f46fd334ea96?pvs=4) <br />
 - [스프링 배치로 대용량 시청 로그 데이터들 정산](https://colorful-math-aeb.notion.site/13fea62dd71780769512fbb90a584b84?pvs=4)
 
 <br />
