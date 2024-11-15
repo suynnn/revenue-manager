@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
@@ -11,6 +13,7 @@ import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class VideoLogStatisticsProcessor implements ItemProcessor<VideoLog, VideoDailyStatistics> {
 
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
