@@ -3,6 +3,7 @@ package org.streaming.revenuemanagement.domain.videodailystatistics.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -44,4 +45,10 @@ public interface VideoDailyStatisticsRepository extends JpaRepository<VideoDaily
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
             Pageable pageable);
+
+    Optional<VideoDailyStatistics> findByVideoIdAndCreatedAtBetween(Long videoId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    @Modifying
+    @Query("UPDATE VideoDailyStatistics v SET v.dailyViews = v.dailyViews + :views, v.dailyAdViews = v.dailyAdViews + :adViews, v.dailyPlayTime = v.dailyPlayTime + :playTime WHERE v.videoId = :videoId")
+    void bulkUpdateStatistics(@Param("videoId") Long videoId, @Param("views") Long views, @Param("adViews") Long adViews, @Param("playTime") Long playTime);
 }

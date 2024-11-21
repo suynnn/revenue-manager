@@ -19,7 +19,7 @@ public class VideoLogStatisticsPartitionProcessor implements ItemProcessor<Video
         Long videoId = videoLog.getVideo().getId();
         log.info("Processing log for Video ID {}: Ad Count {}, Play Time {}", videoId, videoLog.getAdCnt(), videoLog.getPlayTime());
 
-        // VideoDailyStatisticsMap에 데이터를 업데이트합니다.
+        // VideoDailyStatisticsMap에 데이터를 업데이트
         videoDailyStatisticsMap.updateStatistics(videoId, 1L, Long.valueOf(videoLog.getAdCnt()), videoLog.getPlayTime());
 
         // null을 반환하여 Writer에서 중복 저장하지 않도록 함

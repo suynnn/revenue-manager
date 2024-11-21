@@ -15,14 +15,14 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class VideoDailyStatisticsWriter implements ItemWriter<VideoDailyStatistics> {
+public class VideoDailyStatisticsPartitionWriter implements ItemWriter<VideoDailyStatistics> {
 
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
     private final VideoDailyStatisticsMap videoDailyStatisticsMap;
 
     @Override
     public void write(Chunk<? extends VideoDailyStatistics> chunk) throws Exception {
-        // 통합된 statisticsMap에서 모든 VideoDailyStatistics 객체를 가져옵니다.
+        // 통합된 statisticsMap에서 모든 VideoDailyStatistics 객체를 가져옴
         Map<Long, VideoDailyStatistics> statisticsMap = videoDailyStatisticsMap.getStatisticsMap();
         Collection<VideoDailyStatistics> aggregatedStatistics = statisticsMap.values();
 
