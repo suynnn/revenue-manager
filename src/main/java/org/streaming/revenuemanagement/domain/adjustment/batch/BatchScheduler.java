@@ -24,7 +24,7 @@ public class BatchScheduler {
         this.statisticsJob = statisticsJob;
     }
 
-    @Scheduled(cron = "00 19 20 * * *")
+    @Scheduled(cron = "00 25 17 * * *")
     public void runStatisticsJob() {
         try {
             // 어제의 시작 날짜와 종료 날짜 정의
