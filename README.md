@@ -8,8 +8,9 @@
 2024년 10월 16일 ~  <br/> <br/>
 
 # ⚙️ 아키텍처
-### ERD
-![image](https://github.com/user-attachments/assets/056d32c8-10cf-4cca-8855-72f64b7619e8)
+## ERD
+![image](https://github.com/user-attachments/assets/88c8e214-98bf-4278-990c-5b9986922813)
+
 
 <br />
 
@@ -18,31 +19,46 @@
 
 # 🛠️ 기술 스택
 <img src="https://img.shields.io/badge/java 21-007396?style=for-the-badge&logo=OpenJDK&logoColor=white">
+
 <img src="https://img.shields.io/badge/springboot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
+
 <img src="https://img.shields.io/badge/spring batch-6DB33F?style=for-the-badge&logo=spring&logoColor=white">
+
+- 스프링 프로젝트와의 호환성이 높고, 대용량 데이터 처리에 적합하여 사용
+
 <img src="https://img.shields.io/badge/Spring Security-6DB33F?style=for-the-badge&logo=Spring Security&logoColor=white">
+
+- 스프링 생태계에서 보안에 필요한 기능들을 제공하므로 사용
+
 <img src="https://img.shields.io/badge/spring data jpa-6DB33F?style=for-the-badge&logo=spring&logoColor=white">
-<img src="https://img.shields.io/badge/postgreSQL-4169E1?style=for-the-badge&logo=postgreSQL&logoColor=white">
+
+- SQL 중심 개발이 아닌 객체 지향 원칙을 따르는 개발이 가능하므로 사용
+
 <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=Redis&logoColor=white"> 
+
+- 빠른 데이터 접근과 일시적 데이터 저장에 적합해서 사용
+
 <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"> 
+
+- Docker Compose를 작성해서 Redis 등 필요한 데이터베이스를 손쉽게 실행하고 관리
 
 <br />
 
 
 # 🧑‍💻 기술적 도전
-- [-](https://colorful-math-aeb.notion.site/MySQL-PostgreSQL-13bea62dd7178017b596f46fd334ea96?pvs=4) <br />
 - [스프링 배치로 대용량 시청 로그 데이터들 정산](https://colorful-math-aeb.notion.site/13fea62dd71780769512fbb90a584b84?pvs=4)
 
 <br />
 
 # ⌨️ 성능 최적화
 - [스프링 배치 성능 개선을 위한 리팩토링](https://colorful-math-aeb.notion.site/13fea62dd7178035b29ff74fecade712?pvs=4) <br />
-- [스프링 배치 파티셔닝으로 % 성능 개선](https://colorful-math-aeb.notion.site/95-13fea62dd71780e38332e0075ecd09c9?pvs=4)
+- [스프링 배치 파티셔닝으로 44% 성능 개선](https://colorful-math-aeb.notion.site/95-13fea62dd71780e38332e0075ecd09c9?pvs=4)
 
 <br />
 
 # 🚧 트러블 슈팅
 - [파티셔닝 작업 중 데드락 발생](https://colorful-math-aeb.notion.site/13bea62dd7178043a38ad593cb3edcd6?pvs=4)
+
 
 <br />
 
