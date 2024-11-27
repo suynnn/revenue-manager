@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.streaming.revenuemanagement.domain.adjustment.batch.VideoDailyStatisticsMap;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
@@ -21,6 +22,7 @@ public class VideoDailyStatisticsPartitionWriter implements ItemWriter<VideoDail
     private final VideoDailyStatisticsMap videoDailyStatisticsMap;
 
     @Override
+    @Transactional
     public void write(Chunk<? extends VideoDailyStatistics> chunk) throws Exception {
         // 통합된 statisticsMap에서 모든 VideoDailyStatistics 객체를 가져옴
         Map<Long, VideoDailyStatistics> statisticsMap = videoDailyStatisticsMap.getStatisticsMap();

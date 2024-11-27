@@ -20,8 +20,8 @@ public class AdjustmentVideoDailyStatisticsWriter implements ItemWriter<VideoDai
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
     private final VideoStatisticsRepository videoStatisticsRepository;
 
-    @Transactional
     @Override
+    @Transactional
     public void write(Chunk<? extends VideoDailyStatistics> chunk) throws Exception {
         List<VideoDailyStatistics> updatedVideoDailyStatistics = new ArrayList<>();
         List<VideoStatistics> updatedVideoStatistics = new ArrayList<>();

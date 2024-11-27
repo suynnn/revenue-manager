@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
 import org.streaming.revenuemanagement.domain.videostatistics.repository.VideoStatisticsRepository;
 
@@ -14,6 +15,7 @@ public class VideoStatisticsWriter implements ItemWriter<VideoStatistics> {
     private final VideoStatisticsRepository videoStatisticsRepository;
 
     @Override
+    @Transactional
     public void write(Chunk<? extends VideoStatistics> chunk) throws Exception {
         videoStatisticsRepository.saveAll(chunk);
     }
