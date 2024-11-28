@@ -27,13 +27,13 @@ public class Step2VideoDailyStatisticsWriter implements ItemWriter<VideoStatisti
                 "SET daily_views = daily_views + ?, " +
                 "daily_ad_views = daily_ad_views + ?, " +
                 "daily_play_time = daily_play_time + ? " +
-                "WHERE video_id = ?";
+                "WHERE video_id = ? AND created_at = CURRENT_DATE";
 
         // 각 DTO의 필드를 사용하여 batch update 수행
         List<Object[]> batchArgs = chunk.getItems().stream()
                 .map(dto -> new Object[]{
                         dto.getViews(),
-                        Long.valueOf(dto.getAdViews()),
+                        dto.getAdViews(),
                         dto.getPlayTime(),
                         dto.getVideoId()
                 })

@@ -9,7 +9,7 @@ import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilde
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
+import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 
 import java.util.Map;
 
@@ -22,16 +22,16 @@ public class VideoLogPartitionReader {
 
     @Bean
     @StepScope
-    public JpaCursorItemReader<VideoLog> videoLogPartitionCursorReader(
+    public JpaCursorItemReader<VideoDailyStatistics> videoDailyStatisticsPartitionReader(
             @Value("#{stepExecutionContext['minId']}") Long minId,
             @Value("#{stepExecutionContext['maxId']}") Long maxId) {
 
         log.info("minId, maxId = {}, {}", minId, maxId);
 
-        return new JpaCursorItemReaderBuilder<VideoLog>()
-                .name("videoLogPartitionCursorReader")
+        return new JpaCursorItemReaderBuilder<VideoDailyStatistics>()
+                .name("videoDailyStatisticsPartitionReader")
                 .entityManagerFactory(entityManagerFactory)
-                .queryString("SELECT v FROM VideoLog v WHERE v.id BETWEEN :minId AND :maxId ORDER BY v.id ASC")
+                .queryString("SELECT v FROM VideoDailyStatistics v WHERE v.id BETWEEN :minId AND :maxId ORDER BY v.id ASC")
                 .parameterValues(Map.of(
                         "minId", minId,
                         "maxId", maxId

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
-import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
+import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +15,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VideoStatisticsPartitioner implements Partitioner {
 
-    private final VideoLogRepository videoLogRepository;
+    private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
+
     private final String startDateStr;
     private final String endDateStr;
 
@@ -24,8 +25,8 @@ public class VideoStatisticsPartitioner implements Partitioner {
         LocalDateTime startDate = LocalDateTime.parse(startDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         LocalDateTime endDate = LocalDateTime.parse(endDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
-        long min = videoLogRepository.findMinId(startDate, endDate);
-        long max = videoLogRepository.findMaxId(startDate, endDate);
+        long min = videoDailyStatisticsRepository.findMinId(startDate, endDate);
+        long max = videoDailyStatisticsRepository.findMaxId(startDate, endDate);
 
         log.info("VideoStatisticsPartitioner min = {}, max = {}", min, max);
 

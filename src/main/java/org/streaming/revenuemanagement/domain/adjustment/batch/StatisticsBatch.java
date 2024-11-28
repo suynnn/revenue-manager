@@ -8,7 +8,7 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.data.RepositoryItemReader;
+import org.springframework.batch.item.database.JpaCursorItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +22,8 @@ import org.streaming.revenuemanagement.domain.adjustment.batch.processor.*;
 import org.streaming.revenuemanagement.domain.adjustment.batch.reader.*;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.*;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
+import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
-import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
 
 @Slf4j
@@ -32,17 +32,16 @@ import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatis
 public class StatisticsBatch {
 
     private final JobRepository jobRepository;
-    private final VideoLogRepository videoLogRepository;
+    private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
     private final PlatformTransactionManager platformTransactionManager;
 
     private final VideoStatisticsReader videoStatisticsReader;
 
     private final VideoLogReader videoLogReader;
-    private final DummyReader dummyReader;
 
     @Autowired
-    @Qualifier("videoLogPartitionReaderMethod")
-    private RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod;
+    @Qualifier("videoDailyStatisticsPartitionReader")
+    private JpaCursorItemReader<VideoDailyStatistics> videoDailyStatisticsPartitionReader;
 
     private final VideoDailyStatisticsReader videoDailyStatisticsReader;
     private final AdjustmentVideoDailyStatisticsReader adjustmentVideoDailyStatisticsReader;
@@ -82,16 +81,15 @@ public class StatisticsBatch {
             @Value("#{jobParameters['startDate']}") String startDate,
             @Value("#{jobParameters['endDate']}") String endDate
     ) {
-        return new VideoStatisticsPartitioner(videoLogRepository, startDate, endDate);
+        return new VideoStatisticsPartitioner(videoDailyStatisticsRepository, startDate, endDate);
     }
 
     @Bean
     public Job statisticsJob() {
         return new JobBuilder("statisticsJob", jobRepository)
                 .start(statisticsStep1())
-//                .next(step2Manager())
-//                .next(statisticsStep2Final())
-                .next(statisticsStep2NotUsedPartitioner())
+                .next(step2PartitionManager())
+//                .next(statisticsStep2())
                 .next(statisticsStep3())
                 .next(adjustmentStep1())
                 .build();
@@ -108,7 +106,7 @@ public class StatisticsBatch {
     }
 
     @Bean
-    public Step statisticsStep2NotUsedPartitioner() {
+    public Step statisticsStep2() {
         return new StepBuilder("statisticsStep2", jobRepository)
                 .<VideoLog, VideoStatisticsUpdateDto>chunk(chunkSize, platformTransactionManager)
                 .reader(videoLogReader.reader())
@@ -118,31 +116,22 @@ public class StatisticsBatch {
     }
 
     @Bean
-    public Step step2Manager() {
+    public Step step2PartitionManager() {
         return new StepBuilder("statisticsStep2.manager", jobRepository)
                 .partitioner("statisticsStep2", partitioner(null, null))
                 .gridSize(pool)
-                .step(statisticsStep2())
+                .step(statisticsPartitionStep2())
                 .taskExecutor(executor())
                 .build();
     }
 
     @Bean
-    public Step statisticsStep2() {
+    public Step statisticsPartitionStep2() {
         return new StepBuilder("statisticsStep2", jobRepository)
-                .<VideoLog, Void>chunk(chunkSize, platformTransactionManager)
-                .reader(videoLogPartitionReaderMethod)
+                .<VideoDailyStatistics, VideoStatisticsUpdateDto>chunk(chunkSize, platformTransactionManager)
+                .reader(videoDailyStatisticsPartitionReader)
                 .processor(videoLogStatisticsPartitionProcessor)
-                .writer(items -> {})
-                .build();
-    }
-
-    @Bean
-    public Step statisticsStep2Final() {
-        return new StepBuilder("statisticsStep2Final", jobRepository)
-                .<VideoDailyStatistics, VideoDailyStatistics>chunk(chunkSize, platformTransactionManager)
-                .reader(dummyReader)
-                .writer(videoDailyStatisticsPartitionWriter) // Map에 저장된 데이터를 한 번에 저장
+                .writer(videoDailyStatisticsPartitionWriter)
                 .build();
     }
 

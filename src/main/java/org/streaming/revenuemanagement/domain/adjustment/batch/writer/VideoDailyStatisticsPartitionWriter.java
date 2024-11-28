@@ -4,36 +4,41 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.streaming.revenuemanagement.domain.adjustment.batch.VideoDailyStatisticsMap;
-import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
-import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
+import org.streaming.revenuemanagement.domain.adjustment.batch.dto.VideoStatisticsUpdateDto;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class VideoDailyStatisticsPartitionWriter implements ItemWriter<VideoDailyStatistics> {
+public class VideoDailyStatisticsPartitionWriter implements ItemWriter<VideoStatisticsUpdateDto> {
 
-    private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
-    private final VideoDailyStatisticsMap videoDailyStatisticsMap;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     @Transactional
-    public void write(Chunk<? extends VideoDailyStatistics> chunk) throws Exception {
-        // 통합된 statisticsMap에서 모든 VideoDailyStatistics 객체를 가져옴
-        Map<Long, VideoDailyStatistics> statisticsMap = videoDailyStatisticsMap.getStatisticsMap();
-        Collection<VideoDailyStatistics> aggregatedStatistics = statisticsMap.values();
+    public void write(Chunk<? extends VideoStatisticsUpdateDto> chunk) throws Exception {
 
-        if (!aggregatedStatistics.isEmpty()) {
-            // 데이터베이스에 저장
-            videoDailyStatisticsRepository.saveAll(aggregatedStatistics);
+        String sql = "UPDATE video_daily_statistics " +
+                "SET daily_views = daily_views + ?, " +
+                "daily_ad_views = daily_ad_views + ?, " +
+                "daily_play_time = daily_play_time + ? " +
+                "WHERE video_id = ? AND created_at = CURRENT_DATE";
 
-            // 저장 후 맵 초기화
-            statisticsMap.clear();
-        }
+        // 각 DTO의 필드를 사용하여 batch update 수행
+        List<Object[]> batchArgs = chunk.getItems().stream()
+                .map(dto -> new Object[]{
+                        dto.getViews(),
+                        dto.getAdViews(),
+                        dto.getPlayTime(),
+                        dto.getVideoId()
+                })
+                .toList();
+
+        // JdbcTemplate을 사용하여 batch update 실행
+        jdbcTemplate.batchUpdate(sql, batchArgs);
     }
 }

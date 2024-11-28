@@ -18,6 +18,6 @@ public class VideoLogStatisticsProcessor implements ItemProcessor<VideoLog, Vide
         log.info("Processing log for Video ID {}: Ad Count {}, Play Time {}", videoId, videoLog.getAdCnt(), videoLog.getPlayTime());
 
         // DTO에 필요한 통계 데이터를 담아서 반환
-        return new VideoStatisticsUpdateDto(videoId, 1L, videoLog.getAdCnt(), videoLog.getPlayTime());
+        return new VideoStatisticsUpdateDto(videoId, 1L, Long.valueOf(videoLog.getAdCnt()), videoLog.getPlayTime());
     }
 }

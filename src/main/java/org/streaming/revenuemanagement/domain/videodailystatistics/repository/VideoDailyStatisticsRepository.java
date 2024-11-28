@@ -51,4 +51,10 @@ public interface VideoDailyStatisticsRepository extends JpaRepository<VideoDaily
     @Modifying
     @Query("UPDATE VideoDailyStatistics v SET v.dailyViews = v.dailyViews + :views, v.dailyAdViews = v.dailyAdViews + :adViews, v.dailyPlayTime = v.dailyPlayTime + :playTime WHERE v.videoId = :videoId")
     void bulkUpdateStatistics(@Param("videoId") Long videoId, @Param("views") Long views, @Param("adViews") Long adViews, @Param("playTime") Long playTime);
+
+    @Query("SELECT COALESCE(MIN(v.id), 0) FROM VideoDailyStatistics v WHERE v.createdAt BETWEEN :start AND :end")
+    long findMinId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COALESCE(MAX(v.id), 0) FROM VideoDailyStatistics v WHERE v.createdAt BETWEEN :start AND :end")
+    long findMaxId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
