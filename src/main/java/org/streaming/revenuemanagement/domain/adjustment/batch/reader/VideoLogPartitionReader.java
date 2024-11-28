@@ -1,18 +1,16 @@
 package org.streaming.revenuemanagement.domain.adjustment.batch.reader;
 
+import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.data.RepositoryItemReader;
-import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
-import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
-import org.streaming.revenuemanagement.domain.videolog.repository.VideoLogRepository;
+import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 
-import java.util.Arrays;
 import java.util.Map;
 
 @Slf4j
@@ -20,24 +18,25 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VideoLogPartitionReader {
 
-    private final VideoLogRepository videoLogRepository;
+    private final EntityManagerFactory entityManagerFactory;
 
     @Bean
     @StepScope
-    public RepositoryItemReader<VideoLog> videoLogPartitionReaderMethod(
+    public JpaCursorItemReader<VideoDailyStatistics> videoDailyStatisticsPartitionReader(
             @Value("#{stepExecutionContext['minId']}") Long minId,
-            @Value("#{stepExecutionContext['maxId']}") Long maxId,
-            @Value("${spring.batch.chunk.size}") Integer chunkSize) {
+            @Value("#{stepExecutionContext['maxId']}") Long maxId) {
 
-        log.info("minId, maxId, chunkSize = {}, {}, {}", minId, maxId, chunkSize);
+        log.info("minId, maxId = {}, {}", minId, maxId);
 
-        return new RepositoryItemReaderBuilder<VideoLog>()
-                .name("videoLogPartitionReader")
-                .repository(videoLogRepository)
-                .methodName("findVideoLogsByIdRange")
-                .arguments(Arrays.asList(minId, maxId))
-                .sorts(Map.of("id", Sort.Direction.ASC)) // 여기에 정렬 조건 추가
-                .pageSize(chunkSize)
+        return new JpaCursorItemReaderBuilder<VideoDailyStatistics>()
+                .name("videoDailyStatisticsPartitionReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("SELECT v FROM VideoDailyStatistics v WHERE v.id BETWEEN :minId AND :maxId ORDER BY v.id ASC")
+                .parameterValues(Map.of(
+                        "minId", minId,
+                        "maxId", maxId
+                ))
+                .saveState(true)
                 .build();
     }
 }

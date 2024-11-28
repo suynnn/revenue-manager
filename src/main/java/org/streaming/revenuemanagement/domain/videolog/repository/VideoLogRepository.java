@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.streaming.revenuemanagement.domain.adjustment.batch.dto.VideoLogAdCntPlayTimeDto;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogStatisticsRespDto;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -43,11 +45,12 @@ public interface VideoLogRepository extends JpaRepository<VideoLog, Long> {
     @Query("SELECT v FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
     Page<VideoLog> findVideoLogsByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
 
-    @Query("SELECT COALESCE(MIN(v.id), 0) FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
-    long findMinId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
-    // 특정 기간 동안의 최대 VideoLog ID를 조회
-    @Query("SELECT COALESCE(MAX(v.id), 0) FROM VideoLog v WHERE v.createdAt BETWEEN :start AND :end")
-    long findMaxId(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    @Query("SELECT new org.streaming.revenuemanagement.domain.adjustment.batch.dto.VideoLogAdCntPlayTimeDto(v.adCnt, v.playTime) " +
+            "FROM VideoLog v WHERE v.video.id = :videoId AND v.createdAt BETWEEN :startOfDay AND :endOfDay")
+    List<VideoLogAdCntPlayTimeDto> findAdCntAndPlayTimeByVideoIdAndCreatedAtBetween(
+            @Param("videoId") Long videoId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay
+    );
 }
 

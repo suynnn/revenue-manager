@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Component
 public class BatchScheduler {
@@ -24,12 +26,11 @@ public class BatchScheduler {
         this.statisticsJob = statisticsJob;
     }
 
-    @Scheduled(cron = "00 43 19 * * *")
+    @Scheduled(cron = "00 10 10 * * *")
     public void runStatisticsJob() {
         try {
-            // 어제의 시작 날짜와 종료 날짜 정의
-            LocalDateTime startDate = LocalDateTime.now().minusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            LocalDateTime endDate = LocalDateTime.now().minusDays(1).withHour(23).withMinute(59).withSecond(59).withNano(0);
+            LocalDateTime startDate = LocalDate.now().atStartOfDay();
+            LocalDateTime endDate = LocalDate.now().atTime(LocalTime.MAX);
 
             JobParameters jobParameters = new JobParametersBuilder()
                     .addLong("currentTime", System.currentTimeMillis()) // 매 실행 시 유니크한 파라미터 추가 (중복 방지용)
