@@ -68,7 +68,7 @@
 
 # ⌨️ 성능 최적화
 - [스프링 배치 성능 개선을 위한 리팩토링](https://colorful-math-aeb.notion.site/13fea62dd7178035b29ff74fecade712?pvs=4) <br />
-- [스프링 배치 파티셔닝으로 44% 성능 개선](https://colorful-math-aeb.notion.site/95-13fea62dd71780e38332e0075ecd09c9?pvs=4)
+- [스프링 배치 파티셔닝으로 38% 성능 개선](https://colorful-math-aeb.notion.site/95-13fea62dd71780e38332e0075ecd09c9?pvs=4)
 
 <br />
 
