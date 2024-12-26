@@ -89,9 +89,8 @@ public class StatisticsBatch {
     public Job statisticsJob() {
         return new JobBuilder("statisticsJob", jobRepository)
                 .start(statisticsStep1())
-//                .next(step2PartitionManager())
 //                .next(statisticsStep2())
-                .next(masterStep())
+                .next(partitionMasterStep())
                 .next(statisticsStep3())
                 .next(adjustmentStep1())
                 .build();
@@ -118,16 +117,16 @@ public class StatisticsBatch {
     }
 
     @Bean
-    public TaskExecutorPartitionHandler partitionHandler(Step statisticsPartitionStep2) {
+    public TaskExecutorPartitionHandler partitionHandler(Step workerStep) {
         TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
-        partitionHandler.setStep(statisticsPartitionStep2);
+        partitionHandler.setStep(workerStep);
         partitionHandler.setTaskExecutor(executor());
         partitionHandler.setGridSize(pool);
         return partitionHandler;
     }
 
     @Bean
-    public Step masterStep() {
+    public Step partitionMasterStep() {
         return new StepBuilder("masterStep", jobRepository)
                 .partitioner("workerStep", partitioner(null, null))
                 .partitionHandler(partitionHandler(workerStep()))
@@ -137,26 +136,6 @@ public class StatisticsBatch {
     @Bean
     public Step workerStep() {
         return new StepBuilder("workerStep", jobRepository)
-                .<VideoDailyStatistics, VideoStatisticsUpdateDto>chunk(chunkSize, platformTransactionManager)
-                .reader(videoDailyStatisticsPartitionReader)
-                .processor(videoLogStatisticsPartitionProcessor)
-                .writer(videoDailyStatisticsPartitionWriter)
-                .build();
-    }
-
-    @Bean
-    public Step step2PartitionManager() {
-        return new StepBuilder("statisticsStep2.manager", jobRepository)
-                .partitioner("statisticsStep2", partitioner(null, null))
-                .gridSize(pool)
-                .step(statisticsPartitionStep2())
-                .taskExecutor(executor())
-                .build();
-    }
-
-    @Bean
-    public Step statisticsPartitionStep2() {
-        return new StepBuilder("statisticsStep2", jobRepository)
                 .<VideoDailyStatistics, VideoStatisticsUpdateDto>chunk(chunkSize, platformTransactionManager)
                 .reader(videoDailyStatisticsPartitionReader)
                 .processor(videoLogStatisticsPartitionProcessor)
