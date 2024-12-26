@@ -22,7 +22,10 @@ public class StreamingApiController {
                              @RequestBody VideoLogReqDto videoLogReqDto,
                              HttpServletRequest request) {
 
-        streamingService.handlePauseVideo(videoLogReqDto, videoId, request);
+        if (!abusingService.isAbusingUser(videoLogReqDto, request)) {
+
+            streamingService.handlePauseVideo(videoLogReqDto, videoId, request);
+        }
 
         return "pause ok";
     }
