@@ -9,6 +9,9 @@ import org.streaming.revenuemanagement.domain.videoadvertisementlog.service.Vide
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;
 import org.streaming.revenuemanagement.domain.videolog.service.VideoLogService;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,32 +21,36 @@ public class StreamingService {
     private final UserUtils userUtils;
     private final VideoAdvertisementLogService videoAdvertisementLogService;
 
-    public void handleWatchVideo(VideoLogReqDto videoLogReqDto, HttpServletRequest request) {
+//    public void handleWatchVideo(VideoLogReqDto videoLogReqDto, HttpServletRequest request) {
+//
+//        String userId = userUtils.getUserId(request);
+//
+//        saveWatchLog(videoLogReqDto, userId);
+//
+//        printWatchLog(videoLogReqDto, userId);
+//    }
+
+//    private void saveWatchLog(VideoLogReqDto videoLogReqDto, String userId) {
+//
+//        String redisKey = "log:video:" + videoLogReqDto.getVideoId() + ":user:" + userId;
+//        videoLogService.videoLogSaveToRedis(redisKey, videoLogReqDto);
+//    }
+//
+//    private void printWatchLog(VideoLogReqDto videoLogReqDto, String userId) {
+//
+//        log.info("User ID: {}, Video ID: {}, Start Time: {}, End Time: {}, Play Time: {}",
+//                userId, videoLogReqDto.getVideoId(), videoLogReqDto.getStartWatchTime(), videoLogReqDto.getEndWatchTime(), videoLogReqDto.getPlayTime());
+//    }
+
+    public void handlePauseVideo(VideoLogReqDto videoLogReqDto, Long videoId, HttpServletRequest request) {
         String userId = userUtils.getUserId(request);
 
-        saveWatchLog(videoLogReqDto, userId);
+        String formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String redisKey = "log:video:" + videoId + ":user:" + userId + ":date:" + formattedDate;
 
-        printWatchLog(videoLogReqDto, userId);
-    }
-
-    private void saveWatchLog(VideoLogReqDto videoLogReqDto, String userId) {
-
-        String redisKey = "log:video:" + videoLogReqDto.getVideoId() + ":user:" + userId;
         videoLogService.videoLogSaveToRedis(redisKey, videoLogReqDto);
-    }
 
-    private void printWatchLog(VideoLogReqDto videoLogReqDto, String userId) {
-
-        log.info("User ID: {}, Video ID: {}, Start Time: {}, End Time: {}, Play Time: {}",
-                userId, videoLogReqDto.getVideoId(), videoLogReqDto.getStartWatchTime(), videoLogReqDto.getEndWatchTime(), videoLogReqDto.getPlayTime());
-    }
-
-    public void handlePauseVideo(Long videoId, HttpServletRequest request) {
-        String userId = userUtils.getUserId(request);
-
-        String redisKey = "log:video:" + videoId + ":user:" + userId;
-
-        videoLogService.videoLogTTLUpdate(redisKey);
+//        videoLogService.videoLogTTLUpdate(redisKey);
     }
 
     public void watchAdvertisement(Long advertisementId, Long videoId, HttpServletRequest request) {

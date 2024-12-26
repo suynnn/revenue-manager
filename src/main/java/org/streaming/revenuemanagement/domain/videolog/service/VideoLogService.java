@@ -36,15 +36,14 @@ public class VideoLogService {
     }
 
     public void videoLogSaveToRedis(String key, VideoLogReqDto value) {
-        redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(30));
-        redisTemplate.expire(key, Duration.ofSeconds(30)); // TTL 설정
+        redisTemplate.opsForValue().set(key, value);
     }
 
-    public void videoLogTTLUpdate(String key) {
-        Boolean isExist = redisTemplate.hasKey(key);
-
-        if (isExist) {
-            redisTemplate.expire(key, Duration.ofSeconds(30));
-        }
-    }
+//    public void videoLogTTLUpdate(String key) {
+//        Boolean isExist = redisTemplate.hasKey(key);
+//
+//        if (isExist) {
+//            redisTemplate.expire(key, Duration.ofSeconds(30));
+//        }
+//    }
 }
