@@ -17,18 +17,6 @@ public class StreamingApiController {
     private final StreamingService streamingService;
     private final AbusingService abusingService;
 
-//    @PostMapping("/watch")
-//    public String watchVideo(@RequestBody VideoLogReqDto videoLogReqDto,
-//                             HttpServletRequest request) {
-//
-//        if (!abusingService.isAbusingUser(videoLogReqDto, request)) {
-//
-//            streamingService.handleWatchVideo(videoLogReqDto, request);
-//        }
-//
-//        return "OK";
-//    }
-
     @PostMapping("/pause")
     public String pauseVideo(@RequestParam("videoId")Long videoId,
                              @RequestBody VideoLogReqDto videoLogReqDto,
