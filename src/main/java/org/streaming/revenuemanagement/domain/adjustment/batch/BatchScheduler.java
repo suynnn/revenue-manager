@@ -26,7 +26,7 @@ public class BatchScheduler {
         this.statisticsJob = statisticsJob;
     }
 
-    @Scheduled(cron = "00 10 10 * * *")
+    @Scheduled(cron = "00 00 03 * * *")
     public void runStatisticsJob() {
         try {
             LocalDateTime startDate = LocalDate.now().atStartOfDay();

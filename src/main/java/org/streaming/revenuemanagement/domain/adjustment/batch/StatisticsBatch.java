@@ -6,6 +6,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.database.JpaCursorItemReader;
@@ -88,8 +89,9 @@ public class StatisticsBatch {
     public Job statisticsJob() {
         return new JobBuilder("statisticsJob", jobRepository)
                 .start(statisticsStep1())
-                .next(step2PartitionManager())
+//                .next(step2PartitionManager())
 //                .next(statisticsStep2())
+                .next(masterStep())
                 .next(statisticsStep3())
                 .next(adjustmentStep1())
                 .build();
@@ -112,6 +114,33 @@ public class StatisticsBatch {
                 .reader(videoLogReader.reader())
                 .processor(videoLogStatisticsProcessor)
                 .writer(step2VideoDailyStatisticsWriter)
+                .build();
+    }
+
+    @Bean
+    public TaskExecutorPartitionHandler partitionHandler(Step statisticsPartitionStep2) {
+        TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
+        partitionHandler.setStep(statisticsPartitionStep2);
+        partitionHandler.setTaskExecutor(executor());
+        partitionHandler.setGridSize(pool);
+        return partitionHandler;
+    }
+
+    @Bean
+    public Step masterStep() {
+        return new StepBuilder("masterStep", jobRepository)
+                .partitioner("workerStep", partitioner(null, null))
+                .partitionHandler(partitionHandler(workerStep()))
+                .build();
+    }
+
+    @Bean
+    public Step workerStep() {
+        return new StepBuilder("workerStep", jobRepository)
+                .<VideoDailyStatistics, VideoStatisticsUpdateDto>chunk(chunkSize, platformTransactionManager)
+                .reader(videoDailyStatisticsPartitionReader)
+                .processor(videoLogStatisticsPartitionProcessor)
+                .writer(videoDailyStatisticsPartitionWriter)
                 .build();
     }
 
