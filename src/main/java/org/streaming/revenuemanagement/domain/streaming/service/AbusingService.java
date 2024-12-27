@@ -19,18 +19,16 @@ public class AbusingService {
     public boolean isAbusingUser(VideoLogReqDto videoLogReqDto, HttpServletRequest request) {
         String userId = userUtils.getUserId(request);
 
-        // Redis 키 생성
-        String redisKey = "log:video:" + videoLogReqDto.getVideoId() + ":user:" + userId;
-
-        // Redis에 키가 존재하면 바로 어뷰징으로 간주
-        Boolean keyExists = redisTemplate.hasKey(redisKey);
-
-        if (Boolean.TRUE.equals(keyExists)) {
-            return true;
-        }
+        // 체크할 Redis 키
+        String redisKey = "view:video:" + videoLogReqDto.getVideoId() + ":user:" + userId;
 
         // CreatorId와 MemberId가 동일하면 어뷰징으로 간주
         if (videoLogReqDto.getCreatorId().equals(videoLogReqDto.getMemberId())) {
+            return true;
+        }
+
+        // Redis에 키가 존재하면 바로 어뷰징으로 간주
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
             return true;
         }
 
