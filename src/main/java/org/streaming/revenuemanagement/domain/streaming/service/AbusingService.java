@@ -1,6 +1,5 @@
 package org.streaming.revenuemanagement.domain.streaming.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,9 +7,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.streaming.revenuemanagement.domain.streaming.util.UserUtils;
 import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;
-
-import java.util.LinkedHashMap;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -20,34 +16,25 @@ public class AbusingService {
     private final UserUtils userUtils;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    ObjectMapper objectMapper = new ObjectMapper();
-
     public boolean isAbusingUser(VideoLogReqDto videoLogReqDto, HttpServletRequest request) {
         String userId = userUtils.getUserId(request);
 
+        // Redis 키 생성
         String redisKey = "log:video:" + videoLogReqDto.getVideoId() + ":user:" + userId;
 
+        // Redis에 키가 존재하면 바로 어뷰징으로 간주
         Boolean keyExists = redisTemplate.hasKey(redisKey);
 
-        LinkedHashMap map = (LinkedHashMap) redisTemplate.opsForValue().get(redisKey);
-
-        // ObjectMapper를 사용하여 DTO로 변환
-        VideoLogReqDto videoLogReqDtoInRedis = objectMapper.convertValue(map, VideoLogReqDto.class);
-
-        // 존재 여부를 로깅
-        if (keyExists) {
-            if (!Objects.equals(videoLogReqDto.getUuid(), videoLogReqDtoInRedis.getUuid())) {
-                log.info("이미 시청중인 유저 입니다. 어뷰징으로 의심됩니다.");
-                return true;
-            }
-        }
-        else if (videoLogReqDto.getCreatorId() == videoLogReqDto.getMemberId()) {
-            log.info("The user is the creator of this video.");
+        if (Boolean.TRUE.equals(keyExists)) {
             return true;
         }
 
-        log.info("This user is not abusing.");
-        return false; // 키가 없으면 남용 아님
+        // CreatorId와 MemberId가 동일하면 어뷰징으로 간주
+        if (videoLogReqDto.getCreatorId().equals(videoLogReqDto.getMemberId())) {
+            return true;
+        }
+
+        return false; // 위 조건에 해당하지 않으면 어뷰징 X
     }
 
 }
