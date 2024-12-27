@@ -10,12 +10,16 @@ import org.springframework.batch.core.partition.support.TaskExecutorPartitionHan
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.streaming.revenuemanagement.domain.adjustment.batch.dto.VideoStatisticsUpdateDto;
@@ -24,8 +28,12 @@ import org.streaming.revenuemanagement.domain.adjustment.batch.reader.*;
 import org.streaming.revenuemanagement.domain.adjustment.batch.writer.*;
 import org.streaming.revenuemanagement.domain.videodailystatistics.entity.VideoDailyStatistics;
 import org.streaming.revenuemanagement.domain.videodailystatistics.repository.VideoDailyStatisticsRepository;
+import org.streaming.revenuemanagement.domain.videolog.dto.VideoLogReqDto;
 import org.streaming.revenuemanagement.domain.videolog.entity.VideoLog;
 import org.streaming.revenuemanagement.domain.videostatistics.entity.VideoStatistics;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Configuration
@@ -36,8 +44,8 @@ public class StatisticsBatch {
     private final VideoDailyStatisticsRepository videoDailyStatisticsRepository;
     private final PlatformTransactionManager platformTransactionManager;
 
+    private final RedisVideoLogReader redisVideoLogReader;
     private final VideoStatisticsReader videoStatisticsReader;
-
     private final VideoLogReader videoLogReader;
 
     @Autowired
@@ -47,17 +55,21 @@ public class StatisticsBatch {
     private final VideoDailyStatisticsReader videoDailyStatisticsReader;
     private final AdjustmentVideoDailyStatisticsReader adjustmentVideoDailyStatisticsReader;
 
+    private final RedisVideoLogProcessor redisVideoLogProcessor;
     private final VideoLogStatisticsProcessor videoLogStatisticsProcessor;
     private final VideoStatisticsProcessor videoStatisticsProcessor;
     private final VideoLogStatisticsPartitionProcessor videoLogStatisticsPartitionProcessor;
     private final VideoDailyStatisticsProcessor videoDailyStatisticsProcessor;
     private final AdjustmentVideoDailyStatisticsProcessor adjustmentVideoDailyStatisticsProcessor;
 
+    private final RedisVideoLogWriter redisVideoLogWriter;
     private final Step1VideoDailyStatisticsWriter step1VideoDailyStatisticsWriter;
     private final Step2VideoDailyStatisticsWriter step2VideoDailyStatisticsWriter;
     private final VideoDailyStatisticsPartitionWriter videoDailyStatisticsPartitionWriter;
     private final VideoStatisticsWriter videoStatisticsWriter;
     private final AdjustmentVideoDailyStatisticsWriter adjustmentVideoDailyStatisticsWriter;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${spring.batch.chunk.size}")
     private int chunkSize;
@@ -88,11 +100,47 @@ public class StatisticsBatch {
     @Bean
     public Job statisticsJob() {
         return new JobBuilder("statisticsJob", jobRepository)
-                .start(statisticsStep1())
+                .start(storeRedisLogsToDatabaseStep())
+                .next(deleteRedisLogsStep())
+                .next(statisticsStep1())
 //                .next(statisticsStep2())
                 .next(partitionMasterStep())
                 .next(statisticsStep3())
                 .next(adjustmentStep1())
+                .build();
+    }
+
+    @Bean
+    public Step storeRedisLogsToDatabaseStep() {
+        return new StepBuilder("storeRedisLogsToDatabaseStep", jobRepository)
+                .<VideoLogReqDto, VideoLog>chunk(chunkSize, platformTransactionManager)
+                .reader(redisVideoLogReader)
+                .processor(redisVideoLogProcessor)
+                .writer(redisVideoLogWriter)
+                .build();
+    }
+
+    @Bean
+    public Step deleteRedisLogsStep() {
+        return new StepBuilder("deleteRedisLogsStep", jobRepository)
+                .tasklet((contribution, chunkContext) -> {
+
+                    Cursor<byte[]> cursor = redisTemplate.getConnectionFactory()
+                            .getConnection()
+                            .scan(ScanOptions.scanOptions()
+                                    .match("log:video:*:date:" +
+                                            LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "*")
+                                    .count(1000)
+                                    .build());
+
+                    while (cursor.hasNext()) {
+                        String key = new String(cursor.next());
+                        redisTemplate.delete(key);
+                    }
+
+                    return RepeatStatus.FINISHED;
+
+                }, platformTransactionManager)
                 .build();
     }
 
